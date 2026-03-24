@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>财政部 · 行政处罚决定书</title>
+  <style>
+    :root {
+      --red: #c0392b;
+      --red-light: #fadbd8;
+      --red-dark: #96281b;
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #2c3e50;
+      --sub: #7f8c8d;
+      --border: #eaecf0;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--red-dark) 0%, var(--red) 100%);
+      color: #fff;
+      padding: 28px 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 10px rgba(192,57,43,0.35);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-icon {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .header-title { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+    .header-sub { font-size: 13px; opacity: 0.82; margin-top: 3px; }
+    .header-badge {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #2ecc71;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    /* Main */
+    main { max-width: 900px; margin: 36px auto; padding: 0 20px; }
+
+    /* ===== 信息卡 ===== */
+    .info-card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 20px 28px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .info-left { display: flex; align-items: center; gap: 14px; }
+    .date-chip {
+      background: var(--red);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+    }
+    .info-count { font-size: 14px; color: var(--text); }
+    .info-count strong { color: var(--red); font-size: 18px; }
+
+    /* ===== 参考条目（第一条）====== */
+    .ref-entry {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 18px 24px;
+      margin-bottom: 20px;
+    }
+    .ref-label {
+      font-size: 11px;
+      color: #fff;
+      background: var(--red);
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .ref-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .ref-date { font-size: 13px; color: var(--sub); }
+
+    /* ===== 筛选结果列表 ===== */
+    .entry-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .entry-card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .entry-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .entry-num {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--red-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      color: var(--red);
+      margin-top: 2px;
+    }
+    .entry-num.n1 {
+      background: var(--red);
+      color: #fff;
+    }
+    .entry-body { flex: 1; min-width: 0; }
+    .entry-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .entry-title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .entry-title a:hover { color: var(--red); }
+    .entry-meta {
+      font-size: 12px;
+      color: var(--sub);
+      background: #f5f6fa;
+      border-radius: 6px;
+      padding: 3px 10px;
+      display: inline-block;
+    }
+    .entry-actions { margin-top: 10px; }
+    .btn-goto {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--red); color: #fff;
+      text-decoration: none; border-radius: 7px;
+      padding: 6px 14px; font-size: 12px; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-goto:hover { background: var(--red-dark); }
+
+    /* 滚动窗格 - 检查发现的主要问题 */
+    .issues-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 8px;
+      border-left: 3px solid #6c757d;
+    }
+    .issues-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6c757d;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .issues-content {
+      font-size: 13px;
+      color: #495057;
+      line-height: 1.6;
+      max-height: 72px; /* 默认3行高度 */
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: max-height 0.3s ease;
+      word-break: break-all;
+    }
+    .issues-content.expanded {
+      max-height: 500px;
+    }
+    /* 违规分析内容框样式（默认3行高度） */
+    .violation-content {
+      font-size: 13px;
+      color: #2d3436;
+      line-height: 1.8;
+      padding: 8px;
+      background: #fff;
+      border-radius: 6px;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 72px;
+      overflow-y: auto;
+      transition: max-height 0.3s ease;
+    }
+    .violation-content.expanded {
+      max-height: 500px;
+    }
+    .issues-toggle {
+      font-size: 11px;
+      color: #868e96;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .issues-toggle:hover { color: var(--red); }
+
+    /* 刷新按钮 */
+    .btn-refresh {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--red); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 8px 18px; font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-family: inherit;
+    }
+    .btn-refresh:hover { background: var(--red-dark); }
+    .btn-refresh:active { transform: scale(0.97); }
+    .btn-refresh svg { transition: transform 0.5s; }
+    .btn-refresh.loading svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .sk-card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex; align-items: flex-start; gap: 16px;
+      margin-bottom: 12px;
+    }
+    .sk-circle { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; }
+    .sk-body { flex: 1; }
+    .sk-line { height: 14px; margin-bottom: 8px; }
+    .sk-line.short { width: 40%; }
+
+    /* Error */
+    .error-block {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--sub);
+    }
+    .error-block .err-icon { font-size: 42px; margin-bottom: 12px; }
+    .error-block p { font-size: 15px; }
+    .error-block small { font-size: 12px; color: #bdc3c7; display: block; margin-top: 6px; }
+
+    /* 定时刷新 */
+    .schedule-card {
+      margin-top: 20px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .schedule-left { display: flex; align-items: center; gap: 12px; }
+    .schedule-icon {
+      width: 40px; height: 40px;
+      background: var(--red-light);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--red); font-size: 20px;
+    }
+    .schedule-title { font-size: 14px; font-weight: 600; }
+    .schedule-desc { font-size: 12px; color: var(--sub); margin-top: 2px; }
+    .countdown { font-size: 13px; color: var(--sub); text-align: right; }
+    .countdown strong { color: var(--red); font-size: 15px; }
+
+    footer {
+      text-align: center;
+      color: var(--sub);
+      font-size: 12px;
+      padding: 24px;
+    }
+    footer a { color: var(--sub); }
+
+    .status-bar {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--sub);
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .status-ok { background: #2ecc71; }
+    .status-err { background: #e74c3c; }
+    .status-loading { background: #f39c12; animation: pulse 1s infinite; }
+
+    /* 导出卡片 */
+    .export-card {
+      margin-top: 20px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .export-left { display: flex; align-items: center; gap: 12px; }
+    .export-icon {
+      width: 40px; height: 40px;
+      background: #e8f5e9;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .export-title { font-size: 14px; font-weight: 600; }
+    .export-desc { font-size: 12px; color: var(--sub); margin-top: 2px; }
+    .btn-export {
+      display: flex; align-items: center; gap: 6px;
+      background: #27ae60; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 10px 20px; font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-family: inherit;
+    }
+    .btn-export:hover { background: #219a52; }
+    .btn-export:active { transform: scale(0.97); }
+
+    /* 同步状态 */
+    .sync-status {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #2e7d32;
+      display: none;
+    }
+    .sync-status.show { display: flex; align-items: center; gap: 6px; }
+    .sync-status .sync-icon { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+      <div class="header-icon">🏛️</div>
+      <div>
+        <div class="header-title">财政部 · 行政处罚决定书</div>
+        <div class="header-sub">
+          <a href="https://www.mof.gov.cn/gp/xxgkml/index.htm" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,0.5);">
+            中华人民共和国财政部 · 法定主动公开内容
+          </a>
+        </div>
+      </div>
+    </div>
+  <div class="header-badge">
+    <div class="dot"></div>
+    每日 08:00 自动刷新
+  </div>
+</header>
+
+<main>
+  <!-- 顶部汇总栏 -->
+  <div class="info-card" id="infoCard">
+    <div class="info-left">
+      <div class="skeleton" style="width:180px;height:32px;border-radius:16px;"></div>
+    </div>
+    <button class="btn-refresh" id="refreshBtn" onclick="fetchData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      立即刷新
+    </button>
+  </div>
+
+  <!-- 参考条目（第一条的标题和日期） -->
+  <div class="ref-entry" id="refEntry" style="display:none;"></div>
+
+  <!-- 筛选结果列表 -->
+  <div class="entry-list" id="entryList"></div>
+
+  <!-- 导出Excel按钮 -->
+  <div class="export-card">
+    <div class="export-left">
+      <div class="export-icon">📊</div>
+      <div>
+        <div class="export-title">导出数据</div>
+        <div class="export-desc">将当前筛选的政策列表导出为Excel文件</div>
+      </div>
+    </div>
+    <button class="btn-export" onclick="exportToExcel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      导出Excel
+    </button>
+  </div>
+
+  <!-- 同步状态 -->
+  <div class="sync-status" id="syncStatus">
+    <span class="sync-icon">🔄</span>
+    <span id="syncMsg">同步中...</span>
+  </div>
+
+  <!-- 定时刷新说明 -->
+  <div class="schedule-card">
+    <div class="schedule-left">
+      <div class="schedule-icon">⏰</div>
+      <div>
+        <div class="schedule-title">定时自动刷新</div>
+        <div class="schedule-desc">每天上午 08:00 自动获取最新发文</div>
+      </div>
+    </div>
+    <div class="countdown">
+      距下次刷新：<strong id="countdown">计算中…</strong>
+    </div>
+  </div>
+</main>
+
+<footer>
+  数据来源：<a href="https://www.mof.gov.cn/gp/xxgkml/index.htm" target="_blank">中华人民共和国财政部</a> &nbsp;·&nbsp;
+  仅供信息展示，内容以官网为准
+</footer>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script>
+// ============================================================
+//  配置
+// ============================================================
+const PROXY_LIST = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  url => `https://proxy.cors.sh/${url}`,
+];
+const IFRAME_URL = 'https://www.mof.gov.cn/gp/xxgkml/index_8254.htm';
+const BASE_URL  = 'https://www.mof.gov.cn/gp/xxgkml/';
+const CACHE_KEY = 'mof_latest_filtered';
+const FETCH_HOUR = 8;
+
+// ============================================================
+//  localStorage 配置（与归档页共享）
+// ============================================================
+const STORAGE_KEY = 'mof_history_v1';
+
+// ============================================================
+//  Coze智能体配置
+// ============================================================
+const COZE_PROXY_URL = 'https://406b2dbe-bf7e-4e4b-9714-5815ea471565.dev.coze.site/api/analyze';
+
+// 调用Coze智能体分析违规操作（精炼提取）
+async function analyzeViolation(issues, title) {
+  const prompt = `# 角色
+你是一个专业的资产评估违规分析助手。
+
+# 任务
+根据以下财政部行政处罚决定书的"检查发现的主要问题"内容，提取涉及准则和违规点。
+
+政策标题：${title}
+
+检查发现的主要问题：
+${issues}
+
+# 约束
+- 必须基于最新的官方会计准则进行分析
+- 输出必须简练，每个违规点只用一句话概括
+- 违规点描述必须通用化，不要包含具体公司名称、具体金额、年份等案例细节
+- 只输出涉及准则和违规点，不需要操作描述和合规要求
+- 不得编造会计准则内容
+- 如有，有几点就写几点
+
+# 参考格式
+**【涉及准则】**：《企业会计准则第X号——XX》
+**【违规点】**：
+- 期末可抵扣亏损不满足递延所得税资产的确认条件，导致多计递延所得税资产
+- 客户已存在财务状况恶化、偿债能力不足的事实，应收坏账纳入账龄组合依据不充分`;
+
+  try {
+    const response = await fetch(COZE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: prompt })
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    // 解析SSE流
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullAnswer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      fullAnswer += chunk;
+    }
+
+    return fullAnswer.trim() || '分析失败：未能获取有效结果';
+  } catch (error) {
+    console.error('调用代理失败:', error);
+    return '网络错误，请稍后重试';
+  }
+}
+
+// AI分析违规操作（带缓存：每条政策只需分析一次）
+async function analyzeThis(index) {
+  const violationBox = document.getElementById('violation-' + index);
+  const contentEl = document.getElementById('violation-content-' + index);
+  const loadingEl = document.getElementById('violation-loading-' + index);
+  const toggleBtn = document.getElementById('violation-toggle-' + index);
+
+  // 从当前页面数据中获取
+  const entry = window.pageData && window.pageData.filtered && window.pageData.filtered[index];
+  if (!entry) {
+    alert('数据加载中，请稍后重试');
+    return;
+  }
+
+  // 如果已有缓存结果，直接显示/收起
+  if (entry.aiAnalysis) {
+    if (violationBox.style.display === 'block') {
+      // 当前已展开，则收起
+      violationBox.style.display = 'none';
+      return;
+    }
+    // 显示缓存结果（无需loading）
+    violationBox.style.display = 'block';
+    contentEl.style.display = 'block';
+    contentEl.textContent = entry.aiAnalysis;
+    if (toggleBtn) toggleBtn.textContent = '收起';
+    return;
+  }
+
+  // 如果已显示但还没缓存（loading刚结束又点了一次），直接返回
+  if (violationBox.style.display === 'block' && contentEl.innerHTML.trim()) {
+    violationBox.style.display = 'none';
+    return;
+  }
+
+  const title = entry.title || '';
+  const issues = entry.issues || '';
+
+  // 显示分析区域
+  violationBox.style.display = 'block';
+  contentEl.style.display = 'none';
+  loadingEl.style.display = 'block';
+
+  // 调用Coze API分析
+  const result = await analyzeViolation(issues, title);
+
+  // 保存分析结果到数据中，供导出Excel使用
+  entry.aiAnalysis = result;
+
+  // ★ 同步写入localStorage，供归档页直接读取（无需再调用AI）
+  try {
+    const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"snapshots":[],"allEntries":[]}');
+    const entryDate = entry.pubDate || entry._date;
+    const target = history.allEntries.find(e => e.title === entry.title && (e._date === entryDate));
+    if (target) {
+      target.aiAnalysis = result;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    }
+  } catch(se) { console.error('保存AI结果失败:', se); }
+
+  // 显示结果
+  loadingEl.style.display = 'none';
+  contentEl.style.display = 'block';
+  contentEl.textContent = result;
+  if (toggleBtn) toggleBtn.textContent = '收起';
+}
+
+// ============================================================
+//  工具函数
+// ============================================================
+function cacheGet() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)); }
+  catch { return null; }
+}
+
+function cacheSet(data) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ ...data, cachedAt: Date.now() }));
+}
+
+function isCacheValid(cache) {
+  if (!cache || !cache.cachedAt) return false;
+  const t = new Date(cache.cachedAt);
+  const now = new Date();
+  const todayFetch = new Date(now); todayFetch.setHours(FETCH_HOUR, 0, 0, 0);
+  if (now >= todayFetch && t >= todayFetch) return true;
+  if (now < todayFetch) {
+    const y = new Date(todayFetch); y.setDate(y.getDate() - 1);
+    if (t >= y) return true;
+  }
+  return false;
+}
+
+// "2026年01月19日" → 20260119（方便比较）
+function dateToKey(s) {
+  const m = String(s).match(/(\d{4})年(\d{2})月(\d{2})日/);
+  return m ? parseInt(m[1] + m[2] + m[3], 10) : 0;
+}
+
+// ============================================================
+//  Step 1: 解析 — 提取所有条目的标题、链接、发文日期
+// ============================================================
+function parseAllEntries(html) {
+  const subIdx = html.indexOf('id="sub"');
+  const body = subIdx >= 0 ? html.slice(subIdx) : html;
+
+  // 提取全部 <tr>...</tr>
+  const allTr = [];
+  const trRe = /<tr[\s\S]*?<\/tr>/gi;
+  let m;
+  while ((m = trRe.exec(body)) !== null) allTr.push(m[0]);
+  if (allTr.length === 0) return null;
+
+  const entries = [];
+  for (const tr of allTr) {
+    const hrefM = tr.match(/<a\s[^>]*href=["']([^"']+)["'][^>]*>/i);
+    if (!hrefM) continue;
+
+    let href = hrefM[1].trim();
+    if (href.startsWith('./')) href = BASE_URL + href.slice(2);
+    else if (href.startsWith('/')) href = 'https://www.mof.gov.cn' + href;
+
+    const strM = tr.match(/var\s+str\s*=\s*["']([^"']+)["']/i);
+    const title = strM ? strM[1].trim() : '（标题获取失败）';
+
+    const dateM = tr.match(/(\d{4}年\d{2}月\d{2}日)/);
+    const pubDate = dateM ? dateM[1] : '';
+
+    if (!pubDate) continue;
+    entries.push({ title, href, pubDate });
+  }
+  return entries.length > 0 ? entries : null;
+}
+
+// ============================================================
+//  Step 2: 筛选逻辑
+//    ① 从全部条目中挑出标题含"财监法"的
+//    ② 从这些条目里取日期最大的 → "日期A"
+//    ③ 再从全部条目中找：日期==A 且 标题含"财监法" → 最终展示
+// ============================================================
+function filterByCaijianfa(entries) {
+  if (!entries || entries.length === 0) return null;
+
+  // ① 标题含"财监法"的条目
+  const caijianfaEntries = entries.filter(e => e.title.includes('财监法'));
+  if (caijianfaEntries.length === 0) return null;
+
+  // ② 日期最大的"财监法"条目 → 日期A
+  const ref = caijianfaEntries
+    .map(e => ({ ...e, _key: dateToKey(e.pubDate) }))
+    .sort((a, b) => b._key - a._key)[0];
+
+  const dateA = ref.pubDate;
+
+  // ③ 日期==A 且 标题含"财监法"
+  const filtered = entries.filter(
+    e => e.pubDate === dateA && e.title.includes('财监法')
+  );
+
+  return { ref, dateA, filtered };
+}
+
+// ============================================================
+//  渲染函数
+// ============================================================
+function renderInfoBar(dateA, count, cachedAt) {
+  const timeStr = cachedAt ? new Date(cachedAt).toLocaleString('zh-CN') : '—';
+  document.getElementById('infoCard').innerHTML = `
+    <div class="info-left">
+      <div class="date-chip">📅 ${escHtml(dateA)}</div>
+      <div class="info-count">该日期共有 <strong>${count}</strong> 条政策</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="status-bar">
+        <div class="status-dot status-ok"></div>
+        <span>获取于 ${timeStr}</span>
+      </div>
+      <button class="btn-refresh" id="refreshBtn" onclick="fetchData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        立即刷新
+      </button>
+    </div>
+  `;
+}
+
+function renderRefEntry(ref) {
+  const el = document.getElementById('refEntry');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="ref-label">基准政策（最新"财监法"）</div>
+    <div class="ref-title">
+      <a href="${escHtml(ref.href)}" target="_blank">${escHtml(ref.title)}</a>
+    </div>
+    <div class="ref-date">📅 发文日期：${escHtml(ref.pubDate)}（含"财监法"条目中日期最大者，定为"日期A"）</div>
+  `;
+}
+
+function renderEntries(entries) {
+  // 保存数据到全局变量，供AI分析使用
+  window.pageData = { filtered: entries };
+  const list = document.getElementById('entryList');
+  if (entries.length === 0) {
+    list.innerHTML = `
+      <div class="error-block">
+        <div class="err-icon">📭</div>
+        <p>该日期暂无发文记录</p>
+      </div>
+    `;
+    return;
+  }
+  list.innerHTML = entries.map((e, i) => `
+    <div class="entry-card">
+      <div class="entry-num ${i === 0 ? 'n1' : ''}">${i + 1}</div>
+      <div class="entry-body">
+        <div class="entry-title">
+          <a href="${escHtml(e.href)}" target="_blank">${escHtml(e.title)}</a>
+        </div>
+        <span class="entry-meta">📅 ${escHtml(e.pubDate)}</span>
+        ${e.companies ? `<span class="entry-meta" style="background:#e8f5e9;color:#2e7d32;margin-left:8px;">🏢 ${escHtml(e.companies)}</span>` : ''}
+        ${e.penalty ? `<span class="entry-meta" style="background:#fff3e0;color:#e65100;margin-left:8px;">⚖️ ${escHtml(e.penalty)}</span>` : ''}
+        ${e.issues ? `
+        <div class="issues-box">
+          <div class="issues-label">🔍 检查发现的主要问题</div>
+          <div class="issues-content" id="issues-${i}">${escHtml(e.issues)}</div>
+          <span class="issues-toggle" onclick="toggleIssues(${i})">展开/收起</span>
+        </div>
+          <div class="violation-box" id="violation-${i}" style="${e.aiAnalysis ? '' : 'display:none;'}margin-top:10px;padding:12px;padding-bottom:8px;background:linear-gradient(135deg,#fef3e2 0%,#fde8d0 100%);border-radius:8px;border-left:3px solid #e17055;">
+          <div class="issues-label" style="color:#e17055;">⚠️ 违规操作分析</div>
+          <div id="violation-content-${i}" class="violation-content ${e.aiAnalysis ? 'expanded' : ''}" style="${e.aiAnalysis ? 'max-height:500px;' : ''}">${e.aiAnalysis ? escHtml(e.aiAnalysis) : ''}</div>
+          <div style="margin-top:6px;">
+            <span class="violation-toggle" id="violation-toggle-${i}" onclick="toggleViolation(${i})" style="font-size:12px;cursor:pointer;color:#6c5ce7;${e.aiAnalysis ? '' : 'display:none'}">${e.aiAnalysis ? '收起' : ''}</span>
+          </div>
+          <div class="loading" id="violation-loading-${i}" style="display:none;text-align:center;padding:10px;">
+            <span style="color:#6c5ce7;">🤔 AI分析中，请稍候...</span>
+          </div>
+        </div>
+        ` : ''}
+        <div class="entry-actions">
+          ${e.issues ? (e.aiAnalysis ? `
+          <button class="btn-goto" style="background:#6c5ce7;opacity:0.5;" disabled>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            已分析
+          </button>
+          ` : `
+          <button class="btn-goto" style="background:#6c5ce7;" onclick="analyzeThis(${i})">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+            AI分析违规操作
+          </button>
+          `) : ''}
+          <a class="btn-goto" href="${escHtml(e.href)}" target="_blank">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            打开原文
+          </a>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderLoading() {
+  document.getElementById('infoCard').innerHTML = `
+    <div class="info-left">
+      <div class="skeleton" style="width:180px;height:32px;border-radius:16px;"></div>
+    </div>
+    <button class="btn-refresh loading" id="refreshBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      刷新中…
+    </button>
+  `;
+  document.getElementById('refEntry').style.display = 'none';
+  document.getElementById('entryList').innerHTML = [0,1,2].map(() => `
+    <div class="sk-card">
+      <div class="skeleton sk-circle"></div>
+      <div class="sk-body">
+        <div class="skeleton sk-line" style="width:75%;"></div>
+        <div class="skeleton sk-line short"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderError(msg) {
+  renderInfoBar('—', 0);
+  document.getElementById('refEntry').style.display = 'none';
+  document.getElementById('entryList').innerHTML = `
+    <div class="error-block">
+      <div class="err-icon">⚠️</div>
+      <p>获取数据失败</p>
+      <small>${escHtml(msg)}</small>
+      <small>请点击「立即刷新」重试</small>
+    </div>
+  `;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 展开/收起检查问题
+function toggleIssues(index) {
+  const el = document.getElementById('issues-' + index);
+  if (el) {
+    el.classList.toggle('expanded');
+  }
+}
+
+// 展开/收起违规分析（仅控制显示/隐藏，不触发API）
+function toggleViolation(index) {
+  const violationBox = document.getElementById('violation-' + index);
+  const contentEl = document.getElementById('violation-content-' + index);
+  const btn = document.getElementById('violation-toggle-' + index);
+
+  if (!violationBox) return;
+
+  if (violationBox.style.display === 'none' || violationBox.style.display === '') {
+    // 当前是收起状态 → 展开
+    violationBox.style.display = 'block';
+    contentEl.classList.add('expanded');
+    if (btn) btn.textContent = '收起';
+  } else {
+    // 当前是展开状态 → 收起
+    violationBox.style.display = 'none';
+    contentEl.classList.remove('expanded');
+    if (btn) btn.textContent = '展开/收起';
+  }
+}
+
+// ============================================================
+//  导出Excel
+// ============================================================
+function exportToExcel() {
+  // 从window.pageData中获取数据（包含AI分析结果）
+  const data = window.pageData && window.pageData.filtered;
+  if (!data || data.length === 0) {
+    alert('暂无数据可导出');
+    return;
+  }
+
+  // 准备数据：政策发布时间，政策名称，涉及公司，行政处罚，检查发现的主要问题，违规操作简述
+  const excelData = data.map(e => ({
+    '政策发布时间': e.pubDate,
+    '政策名称': e.title,
+    '涉及公司': e.companies || '（未识别）',
+    '行政处罚': e.penalty || '（未识别）',
+    '检查发现的主要问题': e.issues || '（未识别）',
+    '违规操作简述': e.aiAnalysis || ''  // 如果点开过AI分析则显示，否则为空
+  }));
+
+  // 创建工作簿
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '财监法政策');
+
+  // 设置列宽
+  ws['!cols'] = [
+    { wch: 16 },  // 政策发布时间
+    { wch: 50 },  // 政策名称
+    { wch: 40 },  // 涉及公司
+    { wch: 30 },  // 行政处罚
+    { wch: 60 },  // 检查发现的主要问题
+    { wch: 40 }   // 违规操作简述
+  ];
+
+  // 生成文件名：财监法政策_YYYYMMDD.xlsx
+  const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const filename = `财监法政策_${dateStr}.xlsx`;
+
+  // 下载
+  XLSX.writeFile(wb, filename);
+}
+
+// ============================================================
+//  数据（直接嵌入，避免本地文件访问限制）
+// ============================================================
+const EMBEDDED_DATA = {"ref": {"title": "财政部行政处罚决定书（财监法〔2026〕12号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985412.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告", "issues": "四川蓉域出具的蓉域评报字(2024)第005号资产评估报告存在以下问题： 1.评定估算形成结论不恰当。 2007年5月17日特许经营权授予方某市政公用局与特许经营权受让方某燃气有限公司签订《城市管道燃气特许经营合同》。该合同约定，特许经营权有效期至2037年5月17日，特许经营权终止后，某燃气有限公司应当将全部现有的，以及正在建设的燃气管网设施移交给某市政公用局。 资产评估专业人员在测算资产组预计未来现金流量的现值时，错误地把永续期作为收益期，未考虑特许经营合同的有效期限。该错误导致评估差异7,500.00万元（在其他条件不变的情况下，造成高估），差异率22.46%，商誉所在资产组由减值变为不减值。 2.重要评估资料缺失。 资产评估档案中无特许经营合同、管道设计供气量等影响评估结论的重要资料。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, "dateA": "2026年01月19日", "filtered": [{"title": "财政部行政处罚决定书（财监法〔2026〕12号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985412.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告", "issues": "四川蓉域出具的蓉域评报字(2024)第005号资产评估报告存在以下问题： 1.评定估算形成结论不恰当。 2007年5月17日特许经营权授予方某市政公用局与特许经营权受让方某燃气有限公司签订《城市管道燃气特许经营合同》。该合同约定，特许经营权有效期至2037年5月17日，特许经营权终止后，某燃气有限公司应当将全部现有的，以及正在建设的燃气管网设施移交给某市政公用局。 资产评估专业人员在测算资产组预计未来现金流量的现值时，错误地把永续期作为收益期，未考虑特许经营合同的有效期限。该错误导致评估差异7,500.00万元（在其他条件不变的情况下，造成高估），差异率22.46%，商誉所在资产组由减值变为不减值。 2.重要评估资料缺失。 资产评估档案中无特许经营合同、管道设计供气量等影响评估结论的重要资料。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, {"title": "财政部行政处罚决定书（财监法〔2026〕11号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985411.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告", "issues": "四川蓉域出具的蓉域评报字(2024)第005号资产评估报告存在以下问题： 1.评定估算形成结论不恰当。 2007年5月17日特许经营权授予方某市政公用局与特许经营权受让方某燃气有限公司签订《城市管道燃气特许经营合同》。该合同约定，特许经营权有效期至2037年5月17日，特许经营权终止后，某燃气有限公司应当将全部现有的，以及正在建设的燃气管网设施移交给某市政公用局。 资产评估专业人员在测算资产组预计未来现金流量的现值时，错误地把永续期作为收益期，未考虑特许经营合同的有效期限。该错误导致评估差异7,500.00万元（在其他条件不变的情况下，造成高估），差异率22.46%，商誉所在资产组由减值变为不减值。 2.重要评估资料缺失。 资产评估档案中无特许经营合同、管道设计供气量等影响评估结论的重要资料。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, {"title": "财政部行政处罚决定书（财监法〔2026〕10号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985410.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告", "issues": "四川蓉域出具的蓉域评报字(2024)第004号资产评估报告存在以下问题： 1.未考虑停工多年的在建工程贬值因素。该项目在建工程于2013年开建，2015年停工，评估基准日为2023年12月31日。资产评估专业人员以项目尚处于基建阶段为由，未结合评估对象长期停工的实际情况分析在建工程长期停工的经济原因、将来复工的可能性、复工存在的工程准备费用及对原有工程修缮加固费用等影响资产贬值的因素。 2.在建工程重置成本估算不合理。资产评估专业人员采用重置成本法确定公允价值，重置成本估算存在如下问题： 一是评估说明披露\"企业编制其预算时参考定额为《铁路工程预算定额（2010）》，截至评估基准日，最新定额为《铁路工程预算定额（2017）》，本次评估通过对其开工之日至评估基准日定额的基价涨幅，采用造价指数调整法评估。本次摘录了15项工程对2010年的定额与2017年的定额进行对比，通过定额比较，基价平均涨幅约10%，故本次评估以企业实际发生的工程费再乘以工程造价增长率确认其评估值\"。经检查，上述15项工程所包含的分项工程定额基价增长率差异较大，最大增长32.14%、最小增长-27.6%，以这15项工程所"}, {"title": "财政部行政处罚决定书（财监法〔2026〕9号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985408.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告", "issues": "四川蓉域出具的蓉域评报字(2024)第004号资产评估报告存在以下问题： 1.未考虑停工多年的在建工程贬值因素。该项目在建工程于2013年开建，2015年停工，评估基准日为2023年12月31日。资产评估专业人员以项目尚处于基建阶段为由，未结合评估对象长期停工的实际情况分析在建工程长期停工的经济原因、将来复工的可能性、复工存在的工程准备费用及对原有工程修缮加固费用等影响资产贬值的因素。 2.在建工程重置成本估算不合理。资产评估专业人员采用重置成本法确定公允价值，重置成本估算存在如下问题： 一是评估说明披露\"企业编制其预算时参考定额为《铁路工程预算定额（2010）》，截至评估基准日，最新定额为《铁路工程预算定额（2017）》，本次评估通过对其开工之日至评估基准日定额的基价涨幅，采用造价指数调整法评估。本次摘录了15项工程对2010年的定额与2017年的定额进行对比，通过定额比较，基价平均涨幅约10%，故本次评估以企业实际发生的工程费再乘以工程造价增长率确认其评估值\"。经检查，上述15项工程所包含的分项工程定额基价增长率差异较大，最大增长32.14%、最小增长-27.6%，以这15项工程所"}, {"title": "财政部行政处罚决定书（财监法〔2026〕8号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985403.htm", "pubDate": "2026年01月19日", "companies": "四川蓉域资产评估有限公司", "penalty": "警告，没收违法所得6万元并处罚款6万元，没收违法所得2.1万元并处罚款2.1万元", "issues": "（一）你公司出具的蓉域评报字(2024)第004号资产评估报告（以下称第004号报告）存在以下问题： 1.未考虑停工多年的在建工程贬值因素。该项目在建工程于2013年开建，2015年停工，评估基准日为2023年12月31日。你公司资产评估专业人员以项目尚处于基建阶段为由，未结合评估对象长期停工的实际情况分析在建工程长期停工的经济原因、将来复工的可能性、复工存在的工程准备费用及对原有工程修缮加固费用等影响资产贬值的因素。 2.在建工程重置成本估算不合理。你公司资产评估专业人员采用重置成本法确定公允价值，重置成本估算存在如下问题： 一是评估说明披露\"企业编制其预算时参考定额为《铁路工程预算定额（2010）》，截至评估基准日，最新定额为《铁路工程预算定额（2017）》，本次评估通过对其开工之日至评估基准日定额的基价涨幅，采用造价指数调整法评估。本次摘录了15项工程对2010年的定额与2017年的定额进行对比，通过定额比较，基价平均涨幅约10%，故本次评估以企业实际发生的工程费再乘以工程造价增长率确认其评估值\"。经检查，上述15项工程所包含的分项工程定额基价增长率差异较大，最大增长32.14%"}, {"title": "财政部行政处罚决定书（财监法〔2026〕7号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985402.htm", "pubDate": "2026年01月19日", "companies": "广东千福田资产土地房地产评估规划测绘有限公司", "penalty": "警告", "issues": "广东千福田出具的粤千福田资评报字〔2024〕0919B001号资产评估报告存在以下问题： 1.采用市场法评估时选取的评估案例不可比。 被评估单位主营业务为私募股权投资，评估基准日交易性金融资产（股权投资）占资产总额比例约99%。采用市场法（价值比率为市净率）评估时，选取的可比公司为中金公司（SH.601995）、第一创业（SZ.002797）、首创证券（SH.601136）。根据3家可比公司2024年中报披露：中金公司私募股权业务占比为3.6%，股权投资占总资产比例未披露;第一创业私募股权业务占比未披露，股权投资占总资产比例为1.49%;首创证券私募股权业务占比未披露，股权投资占总资产比例为0.68%。资产评估专业人员选取的三家可比公司与被评估单位的业务类型差异大，均不具有可比性。 2.仅采用市场法一种方法进行评估的理由不成立。 资产评估专业人员已收集被投资项目基准日财务报表、2024年半年度基金运营管理情况报告、评估基准日的清产核资审计报告等资料。在具备采用不同评估方法条件的情况下，资产评估专业人员以无法取得被投资项目较完整的财务资料、无法对被投资项目进行评估为由不采用其他评估方法，"}, {"title": "财政部行政处罚决定书（财监法〔2026〕6号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985401.htm", "pubDate": "2026年01月19日", "companies": "广东千福田资产土地房地产评估规划测绘有限公司", "penalty": "警告", "issues": "广东千福田出具的粤千福田资评报字〔2024〕0919B001号资产评估报告存在以下问题： 1.采用市场法评估时选取的评估案例不可比。 被评估单位主营业务为私募股权投资，评估基准日交易性金融资产（股权投资）占资产总额比例约99%。采用市场法（价值比率为市净率）评估时，选取的可比公司为中金公司（SH.601995）、第一创业（SZ.002797）、首创证券（SH.601136）。根据3家可比公司2024年中报披露：中金公司私募股权业务占比为3.6%，股权投资占总资产比例未披露;第一创业私募股权业务占比未披露，股权投资占总资产比例为1.49%;首创证券私募股权业务占比未披露，股权投资占总资产比例为0.68%。资产评估专业人员选取的三家可比公司与被评估单位的业务类型差异大，均不具有可比性。 2.仅采用市场法一种方法进行评估的理由不成立。 资产评估专业人员已收集被投资项目基准日财务报表、2024年半年度基金运营管理情况报告、评估基准日的清产核资审计报告等资料。在具备采用不同评估方法条件的情况下，资产评估专业人员以无法取得被投资项目较完整的财务资料、无法对被投资项目进行评估为由不采用其他评估方法，"}, {"title": "财政部行政处罚决定书（财监法〔2026〕5号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985400.htm", "pubDate": "2026年01月19日", "companies": "广东千福田资产土地房地产评估规划测绘有限公司", "penalty": "警告，没收违法所得8万元并处罚款8万元", "issues": "（一）你公司出具的粤千福田资评报字〔2024〕0919B001号资产评估报告（以下称第0919B001号报告）存在以下问题： 1.采用市场法评估时选取的评估案例不可比。 被评估单位主营业务为私募股权投资，评估基准日交易性金融资产（股权投资）占资产总额比例约99%。你公司资产评估专业人员采用市场法（价值比率为市净率）评估时，选取的可比公司为中金公司（SH.601995）、第一创业（SZ.002797）、首创证券（SH.601136）。根据3家可比公司2024年中报披露：中金公司私募股权业务占比为3.6%，股权投资占总资产比例未披露;第一创业私募股权业务占比未披露，股权投资占总资产比例为1.49%;首创证券私募股权业务占比未披露，股权投资占总资产比例为0.68%。你公司资产评估专业人员选取的三家可比公司与被评估单位的业务类型差异大，均不具有可比性。 2.仅采用市场法一种方法进行评估的理由不成立。 你公司资产评估专业人员已收集被投资项目基准日财务报表、2024年半年度基金运营管理情况报告、评估基准日的清产核资审计报告等资料。在具备采用不同评估方法条件的情况下，你公司资产评估专业人员以无法取得"}, {"title": "财政部行政处罚决定书（财监法〔2026〕4号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985399.htm", "pubDate": "2026年01月19日", "companies": "江苏象仁土地房地产资产评估有限公司", "penalty": "警告", "issues": "江苏象仁出具的苏象仁资评报字〔2024〕第0013号资产评估报告存在以下问题： 资产评估专业人员采用收益法评估房地产和设备时，预测期内机器设备折旧合计金额明显高于预测期内资本性支出总额与评估基准日机器设备账面净值之和，且无合理解释。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, {"title": "财政部行政处罚决定书（财监法〔2026〕3号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985397.htm", "pubDate": "2026年01月19日", "companies": "江苏象仁土地房地产资产评估有限公司", "penalty": "警告", "issues": "江苏象仁出具的苏象仁资评报字〔2024〕第0010号资产评估报告存在以下问题： 资产评估专业人员在未与上市公司及注册会计师沟通的情况下，擅自调整关键评估参数。如评估报告中的折现率为12.52%，该上市公司2023年年度报告（以下称年报）披露的折现率为14%，评估报告的评估结论（1,574.07万元）与年报披露的评估结果（1,574.07万元）却相同。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, {"title": "财政部行政处罚决定书（财监法〔2026〕2号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985396.htm", "pubDate": "2026年01月19日", "companies": "江苏象仁土地房地产资产评估有限公司", "penalty": "警告", "issues": "（一）江苏象仁出具的苏象仁资评报字〔2024〕第0010号资产评估报告存在以下问题： 资产评估专业人员在未与上市公司及注册会计师沟通的情况下，擅自调整关键评估参数。如评估报告中的折现率为12.52%，该上市公司2023年年度报告（以下称年报）披露的折现率为14%，评估报告的评估结论（1,574.07万元）与年报披露的评估结果（1,574.07万元）却相同。 （二）江苏象仁出具的苏象仁资评报字〔2024〕第0013号资产评估报告存在以下问题： 资产评估专业人员采用收益法评估房地产和设备时，预测期内机器设备折旧合计金额明显高于预测期内资本性支出总额与评估基准日机器设备账面净值之和，且无合理解释。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}, {"title": "财政部行政处罚决定书（财监法〔2026〕1号）", "href": "https://www.mof.gov.cn/gp/xxgkml/jdjcj/202603/t20260316_3985394.htm", "pubDate": "2026年01月19日", "companies": "江苏象仁土地房地产资产评估有限公司", "penalty": "警告，责令停业三个月，没收违法所得5万元并处罚款15万元，没收违法所得14万元并处罚款14万元", "issues": "（一）你公司出具的苏象仁资评报字〔2024〕第0010号资产评估报告（以下称第0010号报告）存在以下问题： 你公司资产评估专业人员在未与上市公司及注册会计师沟通的情况下，擅自调整关键评估参数。如评估报告中的折现率为12.52%，该上市公司2023年年度报告（以下称年报）披露的折现率为14%，评估报告的评估结论（1,574.07万元）与年报披露的评估结果（1,574.07万元）却相同。 （二）你公司出具的苏象仁资评报字〔2024〕第0013号资产评估报告（以下称第0013号报告）存在以下问题： 你公司资产评估专业人员采用收益法评估房地产和设备时，预测期内机器设备折旧合计金额明显高于预测期内资本性支出总额与评估基准日机器设备账面净值之和，且无合理解释。 上述事实，有检查报告、检查工作底稿、当事人签证和反馈意见等证据予以证实。"}], "cachedAt": "2026-03-23T15:27:56.271792", "totalCount": 12};
+
+async function loadDataFromJson() {
+  // 直接返回嵌入的数据
+  return EMBEDDED_DATA;
+}
+
+async function fetchData(forceRefresh = true) {
+  // 直接使用嵌入的数据
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  renderLoading();
+
+  try {
+    const data = EMBEDDED_DATA;
+    if (!data || !data.filtered || data.filtered.length === 0) {
+      throw new Error('数据为空');
+    }
+
+    const { ref, dateA, filtered } = data;
+    const cachedAt = Date.now();
+
+    // ★ 从localStorage恢复AI分析缓存，合并到当前数据
+    const enriched = filtered.map(entry => {
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"snapshots":[],"allEntries":[]}');
+      const cached = history.allEntries.find(e => e.title === entry.title && e._date === entry.pubDate);
+      return cached && cached.aiAnalysis ? { ...entry, aiAnalysis: cached.aiAnalysis } : entry;
+    });
+
+    // ★★★ 智能同步到B网页：只同步新条目，不重复同步旧条目 ★★★
+    try {
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"snapshots":[],"allEntries":[]}');
+      
+      // 统计新条目数量
+      let newCount = 0;
+      for (const e of enriched) {
+        const key = e.title + '|' + e.pubDate;
+        const exists = history.allEntries.some(entry => entry.title + '|' + entry._date === key);
+        if (!exists) newCount++;
+      }
+      
+      // 显示同步状态
+      const syncEl = document.getElementById('syncStatus');
+      const syncMsg = document.getElementById('syncMsg');
+      if (syncEl && syncMsg) {
+        syncEl.classList.add('show');
+        if (newCount > 0) {
+          syncMsg.textContent = `🔄 发现 ${newCount} 个新条目，已同步到B网页`;
+          syncEl.style.background = '#e8f5e9';
+          syncEl.style.color = '#2e7d32';
+        } else {
+          syncMsg.textContent = `✓ 无新条目，无需同步（官网暂无更新）`;
+          syncEl.style.background = '#f5f5f5';
+          syncEl.style.color = '#666';
+        }
+        // 3秒后隐藏
+        setTimeout(() => { if (syncEl) syncEl.classList.remove('show'); }, 3000);
+      }
+      
+      // 只有有新条目时才同步
+      if (newCount > 0) {
+        // 合并条目：只添加新条目，保留旧条目（含AI分析结果）
+        for (const e of enriched) {
+          const key = e.title + '|' + e.pubDate;
+          const existingIdx = history.allEntries.findIndex(entry => entry.title + '|' + entry._date === key);
+          const newEntry = { ...e, _date: dateA };
+          
+          if (existingIdx >= 0) {
+            // 条目已存在：保留旧条目的AI分析结果
+            const oldAiAnalysis = history.allEntries[existingIdx].aiAnalysis;
+            if (oldAiAnalysis && !newEntry.aiAnalysis) {
+              newEntry.aiAnalysis = oldAiAnalysis;
+            }
+            history.allEntries[existingIdx] = newEntry;
+          } else {
+            history.allEntries.push(newEntry);
+          }
+        }
+        
+        // 更新快照
+        const existIdx = history.snapshots.findIndex(s => s.dateA === dateA);
+        const snapshot = { dateA, savedAt: Date.now(), count: enriched.length };
+        if (existIdx >= 0) history.snapshots[existIdx] = snapshot;
+        else history.snapshots.push(snapshot);
+        history.snapshots.sort((a, b) => b.savedAt - a.savedAt);
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        console.log(`[同步] 发现 ${newCount} 个新条目，已同步到B网页`);
+      } else {
+        console.log(`[同步] 无新条目，无需同步（官网可能未更新）`);
+      }
+    } catch (se) { console.error('同步失败:', se); }
+
+    // 使用带AI缓存的数据渲染
+    renderInfoBar(dateA, enriched.length, cachedAt);
+    renderRefEntry(ref);
+    renderEntries(enriched);
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+  } catch (e) {
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    renderError(e.message || '数据加载失败');
+  }
+}
+
+// ============================================================
+//  倒计时 & 定时刷新
+// ============================================================
+function updateCountdown() {
+  const now = new Date();
+  const next = new Date(now); next.setHours(FETCH_HOUR, 0, 0, 0);
+  if (now >= next) next.setDate(next.getDate() + 1);
+  const diff = next - now;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('countdown').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function scheduleNextRefresh() {
+  const now = new Date();
+  const next = new Date(now); next.setHours(FETCH_HOUR, 0, 0, 0);
+  if (now >= next) next.setDate(next.getDate() + 1);
+  const delay = next - now;
+  console.log(`[财政部监控] 下次刷新: ${next.toLocaleString('zh-CN')}（${Math.round(delay/60000)}分钟后）`);
+  setTimeout(() => { fetchData(true); scheduleNextRefresh(); }, delay);
+}
+
+// ============================================================
+//  检查数据新鲜度（本版本数据已内嵌，无需检查）
+// ============================================================
+// async function checkDataFreshness() { }
+
+// ============================================================
+//  初始化
+// ============================================================
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// 启动时强制刷新数据（忽略localStorage缓存）
+fetchData(true);
+scheduleNextRefresh();
+</script>
+
+</body>
+</html>

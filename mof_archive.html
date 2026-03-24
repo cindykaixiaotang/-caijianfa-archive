@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>财政部 · 行政处罚决定书（历史归档）</title>
+  <style>
+    :root {
+      --blue: #2980b9;
+      --blue-dark: #1a5276;
+      --blue-light: #d6eaf8;
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #2c3e50;
+      --sub: #7f8c8d;
+      --border: #eaecf0;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07);
+      --red: #c0392b;
+      --red-light: #fadbd8;
+      --red-dark: #96281b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
+      color: #fff;
+      padding: 28px 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 3px 10px rgba(41,128,185,0.35);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-icon {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .header-title { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+    .header-sub { font-size: 13px; opacity: 0.82; margin-top: 3px; }
+    .header-badge {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    main { max-width: 1600px; margin: 36px auto; padding: 0 24px; }
+
+    .info-card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      border: 1px solid var(--border);
+      padding: 18px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .info-left { display: flex; align-items: center; gap: 14px; }
+    .date-chip {
+      background: var(--blue);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 18px;
+      border-radius: 20px;
+    }
+    .info-count { font-size: 14px; color: var(--text); }
+    .info-count strong { color: var(--blue); font-size: 18px; }
+
+    .entry-list { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ========== 表格视图 ========== */
+    .table-wrap {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    .data-table {
+      width: 100%;
+      min-width: 1300px;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: auto;
+    }
+    .data-table thead tr {
+      background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
+      color: #fff;
+    }
+    .data-table thead th {
+      padding: 11px 14px;
+      font-weight: 600;
+      font-size: 12px;
+      text-align: left;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      letter-spacing: 0.3px;
+    }
+    .data-table thead th:first-child { border-radius: 12px 0 0 0; }
+    .data-table thead th:last-child { border-right: none; border-radius: 0 12px 0 0; }
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .data-table tbody tr:hover { background: #e8f4fb; }
+    .data-table td {
+      padding: 10px 13px;
+      vertical-align: top;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .data-table tbody tr:last-child td:first-child { border-radius: 0 0 0 12px; }
+    .data-table tbody tr:last-child td:last-child { border-radius: 0 0 12px 0; }
+    .td-seq { width: 40px; text-align: center; color: #b0bec5; font-size: 11px; }
+    .td-title { min-width: 260px; }
+    .td-title a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12px;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    .td-title a:hover { text-decoration: underline; color: var(--blue-dark); }
+    .td-title .td-title-sub {
+      font-size: 10px;
+      color: #90a4ae;
+      font-weight: 400;
+      margin-top: 1px;
+      display: block;
+    }
+    .td-companies { min-width: 140px; max-width: 180px; font-size: 11px; line-height: 1.6; word-break: break-word; }
+    .td-companies { color: #c0392b; } /* 数据单元格红色 */
+    .data-table thead .td-companies { color: #fff; } /* 表头白色 */
+    .td-penalty { min-width: 120px; max-width: 160px; }
+    .td-issues { min-width: 200px; }
+    .td-standards { min-width: 220px; }
+    .td-violations { min-width: 500px; }
+    
+    /* 违规点列专用样式 */
+    .td-violations .cell-text {
+      -webkit-line-clamp: 4;
+    }
+    .td-violations .cell-text.expanded,
+    .td-violations.cell-ai.expanded .cell-text {
+      display: block;
+      -webkit-line-clamp: unset;
+    }
+
+    .cell-text {
+      font-size: 11px;
+      line-height: 1.7;
+      color: #546e7a;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      word-break: break-word;
+    }
+    .cell-text.expanded {
+      display: block;
+      -webkit-line-clamp: unset;
+    }
+    .cell-expand-btn {
+      font-size: 10px;
+      color: var(--blue);
+      cursor: pointer;
+      user-select: none;
+      margin-top: 3px;
+      display: inline-block;
+      font-weight: 600;
+    }
+    .cell-expand-btn:hover { text-decoration: underline; }
+
+    /* 违规分析单元格特殊样式 */
+    .cell-ai {
+      background: linear-gradient(135deg, #fffbf5 0%, #fef3e2 100%);
+      border-radius: 6px;
+      padding: 8px 10px !important;
+      border: 1px solid #f0d9a8;
+    }
+    .cell-ai .cell-text { color: #8d5e00; font-size: 11px; line-height: 1.8; }
+    .cell-ai .cell-expand-btn { color: #e17055; }
+
+    .ai-done {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #e8f5e9; color: #2e7d32;
+      border: 1px solid #a5d6a7;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 10px; font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 1px 4px rgba(46,125,50,0.1);
+    }
+    .ai-done svg { flex-shrink: 0; }
+
+    .cell-loading {
+      font-size: 10px;
+      color: #aaa;
+      text-align: center;
+      padding: 6px;
+    }
+
+    .violation-loading {
+      font-size: 11px;
+      color: #e17055;
+      text-align: center;
+      padding: 4px;
+    }
+
+    /* 展开详情区 */
+    .expand-detail {
+      background: #fffef8;
+      border: 1px solid #f0d9a8;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-top: 5px;
+      font-size: 11px;
+      color: #444;
+      line-height: 1.9;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .expand-detail.show { display: block; }
+    .expand-detail::before {
+      content: '';
+      display: block;
+      height: 1px;
+      background: linear-gradient(to right, #f0d9a8, transparent);
+      margin-bottom: 6px;
+    }
+
+    /* 表格内日期分组标题 */
+    .date-group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+    .date-group-header:first-child { margin-top: 0; }
+    .date-chip-table {
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 16px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(41,128,185,0.3);
+    }
+    .date-group-meta {
+      font-size: 12px;
+      color: #78909c;
+      font-weight: 500;
+    }
+
+    /* 旧样式保留（兼容） */
+    .entry-card { display: none; }
+
+    .empty-block {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--sub);
+    }
+    .empty-block .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-block h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+    .empty-block p { font-size: 14px; }
+    .empty-block .tip {
+      margin-top: 16px; background: var(--blue-light);
+      color: var(--blue-dark); border-radius: 10px;
+      padding: 14px 20px; font-size: 13px;
+      display: inline-block; text-align: left; line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--sub);
+      font-size: 12px;
+      padding: 30px 0 20px;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* 骨架屏 */
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+    .sk-card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); padding: 18px 24px; display: flex; align-items: flex-start; gap: 16px; margin-bottom: 12px; }
+    .sk-circle { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; }
+    .sk-body { flex: 1; }
+    .sk-line { height: 14px; margin-bottom: 8px; }
+    .sk-line.short { width: 40%; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-icon">📦</div>
+    <div>
+      <div class="header-title">财政部 · 行政处罚决定书</div>
+      <div class="header-sub">历史归档 · 数据持续累积</div>
+    </div>
+  </div>
+  <div class="header-badge">
+    <span>📊</span>
+    <span id="totalCount">—</span>
+  </div>
+</header>
+
+<main id="main">
+  <!-- 内容由JS渲染 -->
+</main>
+
+<footer>
+  数据来源：<a href="https://www.mof.gov.cn/gp/xxgkml/jdjcj/" target="_blank">财政部监督评价局</a>
+  · 由 AI 自动归档
+</footer>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+// ============================================================
+//  Coze智能体配置
+// ============================================================
+const COZE_PROXY_URL = 'https://406b2dbe-bf7e-4e4b-9714-5815ea471565.dev.coze.site/api/analyze';
+
+const STORAGE_KEY = 'mof_history_v1'; // 与A网页共享的存储key
+
+// ============================================================
+//  工具函数
+// ============================================================
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+//  localStorage 操作（从A网页读取累积数据）
+// ============================================================
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function saveToStorage(newData) {
+  // newData: { dateA, filtered, savedAt }
+  try {
+    const history = loadHistory() || { snapshots: [], allEntries: [] };
+    
+    // 按日期去重：如果当天已有快照则替换，否则追加
+    const existingIdx = history.snapshots.findIndex(s => s.dateA === newData.dateA);
+    const snapshot = {
+      dateA: newData.dateA,
+      savedAt: Date.now(),
+      count: newData.filtered.length
+    };
+    
+    if (existingIdx >= 0) {
+      history.snapshots[existingIdx] = snapshot;
+      // 更新当天条目（带AI分析结果的优先保留）
+      const oldEntries = history.allEntries.filter(e => e._date !== newData.dateA);
+      const mergedEntries = [...oldEntries, ...newData.filtered.map(e => ({...e, _date: newData.dateA}))];
+      // 按标题+日期去重
+      const seen = new Set();
+      history.allEntries = mergedEntries.filter(e => {
+        const key = e.title + '|' + e._date;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        // 如果已有同标题条目且有AI分析结果，保留原有
+        const prev = history.allEntries.find(prev => prev.title === e.title && prev._date === e._date && prev.aiAnalysis);
+        if (prev && !e.aiAnalysis) return false;
+        return true;
+      });
+    } else {
+      history.snapshots.push(snapshot);
+      history.allEntries.push(...newData.filtered.map(e => ({...e, _date: newData.dateA})));
+    }
+    
+    // 按savedAt倒序
+    history.snapshots.sort((a,b) => b.savedAt - a.savedAt);
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch(e) { console.error('保存失败:', e); }
+}
+
+// ============================================================
+//  读取A网页的数据
+// ============================================================
+function loadAData() {
+  // 尝试从localStorage的旧格式或A网页共享的EMBEDDED_DATA读取
+  try {
+    const raw = localStorage.getItem('mof_history_v1');
+    if (raw) {
+      const data = JSON.parse(raw);
+      return data.allEntries || [];
+    }
+  } catch(e) {}
+  return [];
+}
+
+// ============================================================
+//  渲染：历史快照概览
+// ============================================================
+function renderHistoryOverview() {
+  const history = loadHistory();
+  const totalCount = history ? history.allEntries.length : 0;
+  document.getElementById('totalCount').textContent = `共 ${totalCount} 条记录`;
+}
+
+// ============================================================
+//  渲染：按日期分组展示所有历史条目
+// ============================================================
+function renderAllHistory() {
+  const history = loadHistory();
+  const main = document.getElementById('main');
+
+  if (!history || !history.allEntries || history.allEntries.length === 0) {
+    main.innerHTML = `
+      <div class="empty-block">
+        <div class="empty-icon">📭</div>
+        <h3>暂无历史数据</h3>
+        <p>请先访问"最新数据"页面，AI分析结果会自动同步到这里</p>
+        <div class="tip">
+          <strong>提示：</strong>首次使用需要先打开 <strong>A网页（最新数据）</strong>，<br>
+          AI分析后数据会自动存入本地，稍后打开本页面即可看到历史累积记录。
+        </div>
+      </div>`;
+    return;
+  }
+
+  const snapshots = history.snapshots || [];
+  const allEntries = history.allEntries || [];
+
+  // 按日期分组
+  const byDate = {};
+  for (const e of allEntries) {
+    const d = e._date || e.pubDate || '未知日期';
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(e);
+  }
+
+  let html = `
+    <div class="info-card">
+      <div class="info-left">
+        <span class="date-chip">📦 历史快照</span>
+        <span class="info-count">共 <strong>${snapshots.length}</strong> 个版本，<strong>${allEntries.length}</strong> 条记录</span>
+      </div>
+    </div>`;
+
+  // 按日期倒序
+  const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+  for (const date of dates) {
+    const entries = byDate[date];
+    const snapshot = snapshots.find(s => s.dateA === date);
+    
+    const savedAtStr = snapshot ? new Date(snapshot.savedAt).toLocaleString('zh-CN') : '';
+    html += `
+    <div class="date-group-header">
+      <span class="date-chip-table">${escHtml(date)}</span>
+      <span class="date-group-meta">${entries.length} 条记录${savedAtStr ? ' · 归档于 ' + savedAtStr : ''}</span>
+    </div>
+    <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="td-seq">#</th>
+          <th>处罚决定</th>
+          <th class="td-companies">涉及公司</th>
+          <th class="td-penalty">处罚措施</th>
+          <th class="td-issues">检查发现的问题</th>
+          <th class="td-standards">涉及准则</th>
+          <th class="td-violations">违规点</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      const idx = `hist_${date}_${i}`;
+      html += renderTableRow(e, idx, i, date);
+    }
+
+    html += `</tbody></table></div>`;
+  }
+
+  // 导出按钮
+  html += `
+  <div style="text-align:center;margin-top:30px;margin-bottom:20px;">
+    <button onclick="exportHistory()" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;">
+      📥 导出全部历史数据（Excel）
+    </button>
+  </div>`;
+
+  main.innerHTML = html;
+}
+
+// ============================================================
+//  渲染：表格单行
+// ============================================================
+// 从AI分析文本中解析涉及准则和违规点
+function parseAIAnalysis(text) {
+  if (!text) return { standards: '', violations: '' };
+
+  // 涉及准则：只提取《》中的内容，用顿号连接
+  const stdMatches = [...text.matchAll(/《[^》]+》/g)];
+  const standardsClean = stdMatches.map(m => m[0]).join('、');
+
+  // 违规点：以【违规点】为界，取其后的内容
+  const vioIdx = text.search(/【?违规点】?/i);
+  let violationsRaw = vioIdx >= 0 ? text.slice(vioIdx).replace(/【?违规点】?[:：]?\s*/i, '').trim() : text;
+  violationsRaw = violationsRaw.replace(/\n涉及准则[：:].*$/, '').trim();
+
+  // 清理列表前缀并重新编号
+  const violationLines = violationsRaw
+    .split('\n')
+    .map(l => l.replace(/^[\s\-*\d.、]+/, '').trim())
+    .filter(l => l.length > 5);
+
+  const numberedViolations = violationLines
+    .map((l, i) => `${i + 1}、${l}`)
+    .join('\n');
+
+  return {
+    standards: standardsClean,
+    violations: numberedViolations || violationsRaw
+  };
+}
+
+function renderTableRow(e, idx, i, date) {
+  const seq = i + 1;
+  const dateStr = escHtml(e.pubDate || e._date || '');
+  const companiesStr = escHtml(e.companies || '（未识别）');
+  const penaltyStr = escHtml(e.penalty || '—');
+  const penaltyShort = truncateText(e.penalty || '', 30);
+  const issuesShort = truncateText(e.issues || '', 60);
+  const issuesId = 'issues-' + idx;
+
+  // 解析AI分析结果
+  const parsed = parseAIAnalysis(e.aiAnalysis || '');
+  const hasAnalysis = !!e.aiAnalysis;
+
+  const issuesToggle = e.issues ? `<span class="cell-expand-btn" id="${issuesId}-btn" onclick="toggleCell('${issuesId}')">展开</span>` : '';
+
+  // 处罚措施列
+  const penaltyId = 'penalty-' + idx;
+  const penaltyToggle = e.penalty && e.penalty.length > 30 ? `<span class="cell-expand-btn" id="${penaltyId}-btn" onclick="toggleCell('${penaltyId}')">展开</span>` : '';
+
+  // 涉及准则列
+  const stdId = 'std-' + idx;
+  const stdShort = truncateText(parsed.standards, 60);
+  const stdToggle = hasAnalysis && parsed.standards ? `<span class="cell-expand-btn" id="${stdId}-btn" onclick="toggleCell('${stdId}')">展开</span>` : '';
+  const stdDetail = hasAnalysis && parsed.standards ? `<div id="${stdId}-detail" class="expand-detail">${escHtml(parsed.standards)}</div>` : '';
+
+  // 违规点列
+  const vioId = 'vio-' + idx;
+  const vioShort = truncateText(parsed.violations, 80);
+  const vioToggle = hasAnalysis ? `<span class="cell-expand-btn" id="${vioId}-btn" onclick="toggleCell('${vioId}')">${parsed.violations.length > 80 ? '展开' : ''}</span>` : '';
+  const vioDetail = hasAnalysis ? `<div id="${vioId}-detail" class="expand-detail">${escHtml(parsed.violations)}</div>` : '';
+
+  const aiBtn = hasAnalysis
+    ? `<span class="ai-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M20 6L9 17l-5-5"/></svg>已分析</span>`
+    : (e.issues ? `<button class="btn-goto" style="background:#6c5ce7;font-size:10px;padding:3px 8px;" onclick="analyzeHistory('${escHtml(idx)}', ${i}, '${escHtml(date)}')">🤖 AI分析</button>` : '');
+
+  return `
+  <tr id="row-${escHtml(idx)}">
+    <td class="td-seq">${seq}</td>
+    <td class="td-title">
+      <a href="${escHtml(e.href)}" target="_blank" title="${escHtml(e.title)}">${escHtml(e.title)}</a>
+      <span class="td-title-sub">📅 ${dateStr}</span>
+    </td>
+    <td class="td-companies">${companiesStr}</td>
+    <td class="td-penalty">
+      <div id="${penaltyId}" class="cell-text">${escHtml(penaltyShort)}</div>
+      ${penaltyToggle}
+      <div id="${penaltyId}-detail" class="expand-detail" style="font-size:11px;color:#555;">${escHtml(penaltyStr)}</div>
+    </td>
+    <td class="td-issues">
+      <div id="${issuesId}" class="cell-text">${escHtml(issuesShort)}</div>
+      ${issuesToggle}
+      <div id="${issuesId}-detail" class="expand-detail">${escHtml(e.issues || '')}</div>
+    </td>
+    <td class="td-standards">
+      ${hasAnalysis ? `
+      <div id="${stdId}" class="cell-text">${escHtml(stdShort)}</div>
+      ${stdToggle}
+      ${stdDetail}
+      ` : `<span style="font-size:11px;color:#ccc;">—</span>`}
+    </td>
+    <td class="td-violations ${hasAnalysis ? 'cell-ai' : ''}">
+      ${hasAnalysis ? `
+      <div id="${vioId}" class="cell-text">${escHtml(vioShort)}</div>
+      ${vioToggle}
+      ${vioDetail}
+      ` : `<div style="font-size:11px;color:#ccc;text-align:center;">${aiBtn}</div>`}
+    </td>
+  </tr>`;
+}
+
+// 单元格展开/收起（展开时只显示全文，收起时只显示缩略）
+function toggleCell(id) {
+  const textEl = document.getElementById(id);
+  const detailEl = document.getElementById(id + '-detail');
+  const btnEl = document.getElementById(id + '-btn');
+  if (!textEl && !detailEl) return;
+  const isExpanded = detailEl && detailEl.classList.contains('show');
+  if (isExpanded) {
+    // 收起：显示缩略，隐藏全文
+    if (detailEl) detailEl.classList.remove('show');
+    if (textEl) { textEl.style.display = ''; textEl.classList.remove('expanded'); }
+    if (btnEl) {
+      const textLen = detailEl ? detailEl.textContent.length : 0;
+      const isStdCol = id.startsWith('std-');
+      btnEl.textContent = (textLen > 60 || (isStdCol && textLen > 0)) ? '展开' : '';
+    }
+  } else {
+    // 展开：隐藏缩略，显示全文
+    if (textEl) textEl.style.display = 'none';
+    if (detailEl) { detailEl.classList.add('show'); }
+    if (btnEl) btnEl.textContent = '收起';
+  }
+}
+
+// 文字截断
+function truncateText(text, maxLen) {
+  if (!text) return '';
+  return text.length > maxLen ? text.substring(0, maxLen) + '…' : text;
+}
+
+// ============================================================
+//  AI分析
+// ============================================================
+async function analyzeViolation(issues, title) {
+  const prompt = `# 角色
+你是一个专业的资产评估违规分析助手。
+
+# 任务
+根据以下财政部行政处罚决定书的"检查发现的主要问题"内容，提取涉及准则和违规点。
+
+政策标题：${title}
+
+检查发现的主要问题：
+${issues}
+
+# 约束
+- 必须基于最新的官方会计准则进行分析
+- 输出必须简练，每个违规点只用一句话概括
+- 违规点描述必须通用化，不要包含具体公司名称、具体金额、年份等案例细节
+- 只输出涉及准则和违规点，不需要操作描述和合规要求
+- 不得编造会计准则内容
+- 如有，有几点就写几点
+
+# 参考格式
+**【涉及准则】**：《企业会计准则第X号——XX》
+**【违规点】**：
+- 期末可抵扣亏损不满足递延所得税资产的确认条件，导致多计递延所得税资产
+- 客户已存在财务状况恶化、偿债能力不足的事实，应收坏账纳入账龄组合依据不充分`;
+
+  try {
+    const response = await fetch(COZE_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: prompt })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullAnswer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullAnswer += decoder.decode(value, { stream: true });
+    }
+    return fullAnswer.trim() || '分析失败';
+  } catch (error) {
+    return '网络错误，请稍后重试';
+  }
+}
+
+async function analyzeHistory(idx, entryIndex, date) {
+  const history = loadHistory();
+  if (!history) return;
+  const entries = history.allEntries.filter(e => (e._date || e.pubDate) === date);
+  const entry = entries[entryIndex];
+  if (!entry) return;
+
+  const stdId = 'std-' + idx;
+  const vioId = 'vio-' + idx;
+  const vioTd = document.getElementById('row-' + idx);
+  if (!vioTd) return;
+
+  // 如果已有缓存，切换展开/收起
+  if (entry.aiAnalysis) {
+    toggleCell(stdId);
+    toggleCell(vioId);
+    return;
+  }
+
+  // 显示loading
+  const stdDetailEl = document.getElementById(stdId + '-detail');
+  const stdBtnEl = document.getElementById(stdId + '-btn');
+  const vioDetailEl = document.getElementById(vioId + '-detail');
+  const vioBtnEl = document.getElementById(vioId + '-btn');
+  const stdTextEl = document.getElementById(stdId);
+  const vioTextEl = document.getElementById(vioId);
+
+  if (stdTextEl) stdTextEl.style.display = 'none';
+  if (vioTextEl) vioTextEl.style.display = 'none';
+  if (stdDetailEl) { stdDetailEl.textContent = '🤔 AI分析中...'; stdDetailEl.classList.add('show'); }
+  if (vioDetailEl) { vioDetailEl.textContent = '🤔 AI分析中...'; vioDetailEl.classList.add('show'); }
+  if (stdBtnEl) stdBtnEl.style.display = 'none';
+  if (vioBtnEl) vioBtnEl.style.display = 'none';
+
+  const result = await analyzeViolation(entry.issues || '', entry.title || '');
+  entry.aiAnalysis = result;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+
+  const newParsed = parseAIAnalysis(result);
+
+  // 填充内容（展开状态：只显示全文）
+  if (stdDetailEl) stdDetailEl.textContent = newParsed.standards;
+  if (vioDetailEl) vioDetailEl.textContent = newParsed.violations;
+  if (stdBtnEl) {
+    stdBtnEl.style.display = 'inline-block';
+    stdBtnEl.textContent = '收起';
+  }
+  if (vioBtnEl) {
+    vioBtnEl.style.display = 'inline-block';
+    vioBtnEl.textContent = '收起';
+  }
+  vioTd.classList.add('cell-ai');
+}
+
+// ============================================================
+//  导出历史数据
+// ============================================================
+function exportHistory() {
+  const history = loadHistory();
+  if (!history || !history.allEntries || history.allEntries.length === 0) {
+    alert('暂无数据可导出');
+    return;
+  }
+  const excelData = history.allEntries.map(e => {
+    const parsed = parseAIAnalysis(e.aiAnalysis || '');
+    return {
+      '归档日期': e._date || '',
+      '政策发布时间': e.pubDate || '',
+      '政策名称': e.title || '',
+      '涉及公司': e.companies || '',
+      '行政处罚': e.penalty || '',
+      '检查发现的主要问题': e.issues || '',
+      '涉及准则': parsed.standards,
+      '违规点': parsed.violations
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  ws['!cols'] = [
+    { wch: 16 }, { wch: 16 }, { wch: 50 },
+    { wch: 40 }, { wch: 40 }, { wch: 60 }, { wch: 50 }, { wch: 60 }
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '历史归档');
+  const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `财监法历史归档_${dateStr}.xlsx`);
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+renderHistoryOverview();
+renderAllHistory();
+</script>
+</body>
+</html>
