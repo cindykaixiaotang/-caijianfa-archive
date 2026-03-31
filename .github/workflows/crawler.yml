@@ -1,0 +1,64 @@
+name: 自动爬取财政部处罚数据
+
+on:
+  schedule:
+    # 每天北京时间早上8点运行 (UTC 0点)
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 安装依赖
+      run: |
+        pip install requests beautifulsoup4
+        
+    - name: 运行爬虫
+      run: python mof_crawler.py
+      
+    - name: 更新 HTML 文件
+      run: |
+        python -c "
+        import json
+        import re
+        
+        # 读取数据
+        with open('mof_penalty_data.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # 更新 latest HTML
+        with open('mof_latest.html', 'r', encoding='utf-8') as f:
+            latest_content = f.read()
+        
+        # 替换 EMBEDDED_DATA
+        data_json = json.dumps(data, ensure_ascii=False, indent=2)
+        latest_content = re.sub(
+            r'const EMBEDDED_DATA = \\{.*?\\};',
+            f'const EMBEDDED_DATA = {data_json};',
+            latest_content,
+            flags=re.DOTALL
+        )
+        
+        with open('mof_latest.html', 'w', encoding='utf-8') as f:
+            f.write(latest_content)
+        
+        print('已更新 mof_latest.html')
+        "
+        
+    - name: 提交更改
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add mof_latest.html mof_archive.html mof_penalty_data.json
+        git commit -m "自动更新处罚数据 $(date +%Y-%m-%d)" || echo "无更改"
+        git push
