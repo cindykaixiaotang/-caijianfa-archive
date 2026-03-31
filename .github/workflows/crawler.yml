@@ -1,64 +1,111 @@
 name: 自动爬取财政部处罚数据
 
 on:
+  # 每天北京时间早上8点运行 (UTC 0点)
   schedule:
-    # 每天北京时间早上8点运行 (UTC 0点)
     - cron: '0 0 * * *'
-  workflow_dispatch:  # 允许手动触发
+  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
-  crawl:
+  crawl-and-update:
     runs-on: ubuntu-latest
     
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
-      
+    
     - name: 设置 Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
+    
     - name: 安装依赖
       run: |
         pip install requests beautifulsoup4
-        
+    
     - name: 运行爬虫
-      run: python mof_crawler.py
-      
-    - name: 更新 HTML 文件
       run: |
-        python -c "
+        python mof_crawler.py
+    
+    - name: 更新 HTML 内嵌数据
+      run: |
+        python << 'EOF'
         import json
         import re
         
-        # 读取数据
+        # 读取爬取的数据
         with open('mof_penalty_data.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        # 更新 latest HTML
+        # 更新 mof_latest.html
         with open('mof_latest.html', 'r', encoding='utf-8') as f:
-            latest_content = f.read()
+            html_content = f.read()
         
-        # 替换 EMBEDDED_DATA
-        data_json = json.dumps(data, ensure_ascii=False, indent=2)
-        latest_content = re.sub(
-            r'const EMBEDDED_DATA = \\{.*?\\};',
-            f'const EMBEDDED_DATA = {data_json};',
-            latest_content,
-            flags=re.DOTALL
-        )
+        # 替换 EMBEDDED_DATA - 使用更宽松的正则
+        json_str = json.dumps(data, ensure_ascii=False, indent=2)
+        pattern = r'const\s+EMBEDDED_DATA\s*=\s*\{[\s\S]*?\};'
+        replacement = f'const EMBEDDED_DATA = {json_str};'
+        html_content = re.sub(pattern, replacement, html_content)
         
         with open('mof_latest.html', 'w', encoding='utf-8') as f:
-            f.write(latest_content)
+            f.write(html_content)
         
-        print('已更新 mof_latest.html')
-        "
+        print("[OK] mof_latest.html 已更新")
         
+        # 更新 mof_archive.html
+        with open('mof_archive.html', 'r', encoding='utf-8') as f:
+            archive_html = f.read()
+        
+        # 构建 archive 数据
+        archive_data = {
+            "allEntries": data.get("filtered", []),
+            "snapshots": [{
+                "dateA": data.get("dateA", ""),
+                "savedAt": data.get("cachedAt", ""),
+                "count": len(data.get("filtered", []))
+            }],
+            "lastUpdated": data.get("cachedAt", "")
+        }
+        archive_json = json.dumps(archive_data, ensure_ascii=False, indent=2)
+        
+        # 检查是否已有 EMBEDDED_ARCHIVE_DATA
+        if 'const EMBEDDED_ARCHIVE_DATA' in archive_html:
+            # 更新现有数据 - 使用更宽松的正则，匹配多行内容直到分号
+            pattern = r'const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*\{[\s\S]*?\n\};'
+            replacement = f'const EMBEDDED_ARCHIVE_DATA = {archive_json};'
+            new_html = re.sub(pattern, replacement, archive_html)
+            if new_html != archive_html:
+                archive_html = new_html
+                print("[OK] mof_archive.html 数据已更新")
+            else:
+                print("[WARN] mof_archive.html 正则未匹配到数据，尝试备用方案")
+                # 备用方案：直接替换整个数据块
+                pattern2 = r'(const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*)\{[\s\S]*?\}(;)'
+                replacement2 = r'\1' + archive_json + r'\2'
+                archive_html = re.sub(pattern2, replacement2, archive_html)
+        else:
+            # 添加新的内嵌数据（在第一个 <script> 标签后）
+            insert_script = f'''// 内嵌历史数据（自动更新）
+const EMBEDDED_ARCHIVE_DATA = {archive_json};
+'''
+            # 在 <script> 标签后插入
+            archive_html = archive_html.replace(
+                '<script>',
+                '<script>\n' + insert_script
+            )
+            print("[OK] mof_archive.html 已添加新数据")
+        
+        with open('mof_archive.html', 'w', encoding='utf-8') as f:
+            f.write(archive_html)
+        print("[OK] mof_archive.html 写入完成")
+        EOF
+    
     - name: 提交更改
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add mof_latest.html mof_archive.html mof_penalty_data.json
-        git commit -m "自动更新处罚数据 $(date +%Y-%m-%d)" || echo "无更改"
-        git push
+        git add mof_penalty_data.json mof_latest.html mof_archive.html
+        git diff --staged --quiet || (git commit -m "自动更新: $(date +'%Y-%m-%d %H:%M')" && git push)
