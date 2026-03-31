@@ -1157,12 +1157,17 @@ function exportHistory() {
 // ============================================================
 //  初始化
 // ============================================================
-renderHistoryOverview();
-renderAllHistory();
-initColumnResize();
+function init() {
+  renderHistoryOverview();
+  renderAllHistory();
+  initColumnResize();
+}
 
-// 搜索框回车搜索
+// 等待 DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
+  init();
+  
+  // 搜索框回车搜索
   document.getElementById('main').addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && e.target.id === 'searchInput') {
       doSearch();
