@@ -86,9 +86,7 @@ jobs:
                 archive_html = re.sub(pattern2, replacement2, archive_html)
         else:
             # 添加新的内嵌数据（在第一个 <script> 标签后）
-            insert_script = f'''// 内嵌历史数据（自动更新）
-const EMBEDDED_ARCHIVE_DATA = {archive_json};
-'''
+            insert_script = "// 内嵌历史数据（自动更新）\nconst EMBEDDED_ARCHIVE_DATA = " + archive_json + ";\n"
             # 在 <script> 标签后插入
             archive_html = archive_html.replace(
                 '<script>',
