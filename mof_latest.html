@@ -556,7 +556,14 @@ ${issues}
   }
 }
 
-// AI分析违规操作（带缓存：每条政策只需分析一次）
+// 检查分析结果是否成功（不是错误提示）
+function isAnalysisSuccess(result) {
+  if (!result) return false;
+  const errorKeywords = ['网络错误', '请稍后重试', '分析失败', '服务器错误', '请求超时'];
+  return !errorKeywords.some(keyword => result.includes(keyword));
+}
+
+// AI分析违规操作（带缓存：每条政策只需分析一次，失败可重试）
 async function analyzeThis(index) {
   const violationBox = document.getElementById('violation-' + index);
   const contentEl = document.getElementById('violation-content-' + index);
@@ -570,8 +577,8 @@ async function analyzeThis(index) {
     return;
   }
 
-  // 如果已有缓存结果，直接显示/收起
-  if (entry.aiAnalysis) {
+  // 如果已有成功的缓存结果，直接显示/收起
+  if (entry.aiAnalysis && isAnalysisSuccess(entry.aiAnalysis)) {
     if (violationBox.style.display === 'block') {
       // 当前已展开，则收起
       violationBox.style.display = 'none';
@@ -586,7 +593,7 @@ async function analyzeThis(index) {
   }
 
   // 如果已显示但还没缓存（loading刚结束又点了一次），直接返回
-  if (violationBox.style.display === 'block' && contentEl.innerHTML.trim()) {
+  if (violationBox.style.display === 'block' && contentEl.innerHTML.trim() && !entry.aiAnalysis) {
     violationBox.style.display = 'none';
     return;
   }
@@ -602,25 +609,28 @@ async function analyzeThis(index) {
   // 调用Coze API分析
   const result = await analyzeViolation(issues, title);
 
-  // 保存分析结果到数据中，供导出Excel使用
-  entry.aiAnalysis = result;
+  // 只有分析成功才保存结果
+  if (isAnalysisSuccess(result)) {
+    // 保存分析结果到数据中，供导出Excel使用
+    entry.aiAnalysis = result;
 
-  // ★ 同步写入localStorage，供归档页直接读取（无需再调用AI）
-  try {
-    const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"snapshots":[],"allEntries":[]}');
-    const entryDate = entry.pubDate || entry._date;
-    const target = history.allEntries.find(e => e.title === entry.title && (e._date === entryDate));
-    if (target) {
-      target.aiAnalysis = result;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    }
-  } catch(se) { console.error('保存AI结果失败:', se); }
+    // ★ 同步写入localStorage，供归档页直接读取（无需再调用AI）
+    try {
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"snapshots":[],"allEntries":[]}');
+      const entryDate = entry.pubDate || entry._date;
+      const target = history.allEntries.find(e => e.title === entry.title && (e._date === entryDate));
+      if (target) {
+        target.aiAnalysis = result;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      }
+    } catch(se) { console.error('保存AI结果失败:', se); }
+  }
 
   // 显示结果
   loadingEl.style.display = 'none';
   contentEl.style.display = 'block';
   contentEl.textContent = result;
-  if (toggleBtn) toggleBtn.textContent = '收起';
+  if (toggleBtn) toggleBtn.textContent = isAnalysisSuccess(result) ? '收起' : '⚠️ 分析失败，点击重试';
 }
 
 // ============================================================
@@ -796,23 +806,31 @@ function renderEntries(entries) {
         </div>
         ` : ''}
         <div class="entry-actions">
-          ${e.issues ? (e.aiAnalysis ? `
-          <button class="btn-goto" style="background:#6c5ce7;opacity:0.5;" disabled>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-            已分析
-          </button>
-          ` : `
-          <button class="btn-goto" style="background:#6c5ce7;" onclick="analyzeThis(${i})">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4M12 8h.01"/>
-            </svg>
-            AI分析违规操作
-          </button>
-          `) : ''}
+          ${e.issues ? (() => {
+            const hasAnalysis = !!e.aiAnalysis;
+            const isSuccess = hasAnalysis && isAnalysisSuccess(e.aiAnalysis);
+            const isFailed = hasAnalysis && !isSuccess;
+            
+            if (isSuccess) {
+              return `
+              <button class="btn-goto" style="background:#6c5ce7;opacity:0.5;" disabled>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                已分析
+              </button>`;
+            } else {
+              return `
+              <button class="btn-goto" style="background:${isFailed ? '#e74c3c' : '#6c5ce7'};" onclick="analyzeThis(${i})">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="${isFailed ? 'M12 8v4M12 16h.01' : 'M12 16v-4M12 8h.01'}"/>
+                </svg>
+                ${isFailed ? '⚠️ 重新分析' : '🤖 AI分析违规操作'}
+              </button>`;
+            }
+          })() : ''}
           <a class="btn-goto" href="${escHtml(e.href)}" target="_blank">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
