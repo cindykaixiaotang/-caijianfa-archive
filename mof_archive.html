@@ -588,9 +588,13 @@ function renderTableRow(e, idx, i, date) {
   const vioToggle = hasAnalysis ? `<span class="cell-expand-btn" id="${vioId}-btn" onclick="toggleCell('${vioId}')">${parsed.violations.length > 80 ? '展开' : ''}</span>` : '';
   const vioDetail = hasAnalysis ? `<div id="${vioId}-detail" class="expand-detail">${escHtml(parsed.violations)}</div>` : '';
 
-  const aiBtn = hasAnalysis
+  // 判断分析状态：成功、失败、未分析
+  const analysisSuccess = hasAnalysis && isAnalysisSuccess(e.aiAnalysis);
+  const analysisFailed = hasAnalysis && !isAnalysisSuccess(e.aiAnalysis);
+  
+  const aiBtn = analysisSuccess
     ? `<span class="ai-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M20 6L9 17l-5-5"/></svg>已分析</span>`
-    : (e.issues ? `<button class="btn-goto" style="background:#6c5ce7;font-size:10px;padding:3px 8px;" onclick="analyzeHistory('${escHtml(idx)}', ${i}, '${escHtml(date)}')">🤖 AI分析</button>` : '');
+    : (e.issues ? `<button class="btn-goto" style="background:${analysisFailed ? '#e74c3c' : '#6c5ce7'};font-size:10px;padding:3px 8px;" onclick="analyzeHistory('${escHtml(idx)}', ${i}, '${escHtml(date)}')">${analysisFailed ? '⚠️ 重新分析' : '🤖 AI分析'}</button>` : '');
 
   return `
   <tr id="row-${escHtml(idx)}">
@@ -617,12 +621,12 @@ function renderTableRow(e, idx, i, date) {
       ${stdDetail}
       ` : `<span style="font-size:11px;color:#ccc;">—</span>`}
     </td>
-    <td class="td-violations ${hasAnalysis ? 'cell-ai' : ''}">
-      ${hasAnalysis ? `
+    <td class="td-violations ${analysisSuccess ? 'cell-ai' : ''}">
+      ${analysisSuccess ? `
       <div id="${vioId}" class="cell-text">${escHtml(vioShort)}</div>
       ${vioToggle}
       ${vioDetail}
-      ` : `<div style="font-size:11px;color:#ccc;text-align:center;">${aiBtn}</div>`}
+      ` : `<div style="font-size:11px;color:#ccc;text-align:center;padding:8px 0;">${aiBtn}</div>`}
     </td>
   </tr>`;
 }
@@ -707,6 +711,13 @@ ${issues}
   }
 }
 
+// 检查分析结果是否成功（不是错误提示）
+function isAnalysisSuccess(result) {
+  if (!result) return false;
+  const errorKeywords = ['网络错误', '请稍后重试', '分析失败', '服务器错误', '请求超时'];
+  return !errorKeywords.some(keyword => result.includes(keyword));
+}
+
 async function analyzeHistory(idx, entryIndex, date) {
   const history = loadHistory();
   if (!history) return;
@@ -719,8 +730,8 @@ async function analyzeHistory(idx, entryIndex, date) {
   const vioTd = document.getElementById('row-' + idx);
   if (!vioTd) return;
 
-  // 如果已有缓存，切换展开/收起
-  if (entry.aiAnalysis) {
+  // 如果已有成功的缓存，切换展开/收起
+  if (entry.aiAnalysis && isAnalysisSuccess(entry.aiAnalysis)) {
     toggleCell(stdId);
     toggleCell(vioId);
     return;
@@ -742,23 +753,42 @@ async function analyzeHistory(idx, entryIndex, date) {
   if (vioBtnEl) vioBtnEl.style.display = 'none';
 
   const result = await analyzeViolation(entry.issues || '', entry.title || '');
-  entry.aiAnalysis = result;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  
+  // 只有分析成功才保存到localStorage
+  if (isAnalysisSuccess(result)) {
+    entry.aiAnalysis = result;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  }
 
   const newParsed = parseAIAnalysis(result);
 
   // 填充内容（展开状态：只显示全文）
   if (stdDetailEl) stdDetailEl.textContent = newParsed.standards;
   if (vioDetailEl) vioDetailEl.textContent = newParsed.violations;
-  if (stdBtnEl) {
-    stdBtnEl.style.display = 'inline-block';
-    stdBtnEl.textContent = '收起';
+  
+  // 如果分析失败，显示重试按钮在违规点列
+  if (!isAnalysisSuccess(result)) {
+    // 隐藏loading，显示错误信息和重试按钮
+    const vioCell = vioTd.querySelector('.td-violations');
+    if (vioCell) {
+      vioCell.innerHTML = `<div style="font-size:11px;color:#e74c3c;text-align:center;padding:8px 0;">
+        <div style="margin-bottom:6px;">⚠️ ${escHtml(result)}</div>
+        <button class="btn-goto" style="background:#e74c3c;font-size:10px;padding:4px 12px;border:none;border-radius:4px;color:#fff;cursor:pointer;" onclick="analyzeHistory('${escHtml(idx)}', ${entryIndex}, '${escHtml(date)}')">重新分析</button>
+      </div>`;
+    }
+  } else {
+    if (stdBtnEl) {
+      stdBtnEl.style.display = 'inline-block';
+      stdBtnEl.textContent = '收起';
+      stdBtnEl.onclick = function() { toggleCell(stdId); };
+    }
+    if (vioBtnEl) {
+      vioBtnEl.style.display = 'inline-block';
+      vioBtnEl.textContent = '收起';
+      vioBtnEl.onclick = function() { toggleCell(vioId); };
+    }
+    vioTd.classList.add('cell-ai');
   }
-  if (vioBtnEl) {
-    vioBtnEl.style.display = 'inline-block';
-    vioBtnEl.textContent = '收起';
-  }
-  vioTd.classList.add('cell-ai');
 }
 
 // ============================================================
