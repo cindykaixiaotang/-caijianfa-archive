@@ -34,16 +34,16 @@ jobs:
         import json
         import re
         
-        # 读取爬取的数据
+        # 读取爬取的最新数据
         with open('mof_penalty_data.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            new_data = json.load(f)
         
         # 更新 mof_latest.html
         with open('mof_latest.html', 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # 替换 EMBEDDED_DATA - 使用更宽松的正则
-        json_str = json.dumps(data, ensure_ascii=False, indent=2)
+        # 替换 EMBEDDED_DATA
+        json_str = json.dumps(new_data, ensure_ascii=False, indent=2)
         pattern = r'const\s+EMBEDDED_DATA\s*=\s*\{[\s\S]*?\};'
         replacement = f'const EMBEDDED_DATA = {json_str};'
         html_content = re.sub(pattern, replacement, html_content)
@@ -53,45 +53,84 @@ jobs:
         
         print("[OK] mof_latest.html 已更新")
         
-        # 更新 mof_archive.html
+        # 更新 mof_archive.html - 合并新旧数据
         with open('mof_archive.html', 'r', encoding='utf-8') as f:
             archive_html = f.read()
         
-        # 构建 archive 数据
+        # 提取现有的 EMBEDDED_ARCHIVE_DATA
+        existing_entries = []
+        existing_snapshots = []
+        archive_match = re.search(r'const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*(\{[\s\S]*?\n\});', archive_html)
+        
+        if archive_match:
+            try:
+                existing_data = json.loads(archive_match.group(1))
+                existing_entries = existing_data.get('allEntries', [])
+                existing_snapshots = existing_data.get('snapshots', [])
+                print(f"[INFO] 现有数据: {len(existing_entries)} 条记录")
+            except:
+                print("[WARN] 无法解析现有数据，将创建新数据")
+        
+        # 合并数据：新数据 + 旧数据（按URL去重）
+        new_entries = new_data.get("filtered", [])
+        existing_urls = {e.get('href', '') for e in existing_entries}
+        
+        # 建立旧数据的 URL -> aiAnalysis 映射，用于复用 AI 分析结果
+        existing_ai_map = {e.get('href', ''): e.get('aiAnalysis', '') for e in existing_entries if e.get('aiAnalysis')}
+        
+        # 只添加不存在的新条目
+        added_count = 0
+        for entry in new_entries:
+            url = entry.get('href', '')
+            if url not in existing_urls:
+                entry['_date'] = new_data.get('dateA', '')
+                # 如果有相同 URL 的旧 AI 分析结果，复用它
+                if url in existing_ai_map and existing_ai_map[url]:
+                    entry['aiAnalysis'] = existing_ai_map[url]
+                    print(f"[INFO] 复用 AI 分析: {entry.get('title', '')[:30]}...")
+                existing_entries.append(entry)
+                added_count += 1
+        
+        print(f"[INFO] 新增 {added_count} 条记录，总共 {len(existing_entries)} 条")
+        
+        # 添加新快照
+        new_snapshot = {
+            "dateA": new_data.get("dateA", ""),
+            "savedAt": new_data.get("cachedAt", ""),
+            "count": len(new_entries)
+        }
+        existing_snapshots.insert(0, new_snapshot)  # 新快照放前面
+        
+        # 限制快照数量（保留最近30个）
+        if len(existing_snapshots) > 30:
+            existing_snapshots = existing_snapshots[:30]
+        
+        # 构建新的 archive 数据
         archive_data = {
-            "allEntries": data.get("filtered", []),
-            "snapshots": [{
-                "dateA": data.get("dateA", ""),
-                "savedAt": data.get("cachedAt", ""),
-                "count": len(data.get("filtered", []))
-            }],
-            "lastUpdated": data.get("cachedAt", "")
+            "allEntries": existing_entries,
+            "snapshots": existing_snapshots,
+            "lastUpdated": new_data.get("cachedAt", "")
         }
         archive_json = json.dumps(archive_data, ensure_ascii=False, indent=2)
         
-        # 检查是否已有 EMBEDDED_ARCHIVE_DATA
+        # 替换 EMBEDDED_ARCHIVE_DATA
         if 'const EMBEDDED_ARCHIVE_DATA' in archive_html:
-            # 更新现有数据 - 使用更宽松的正则，匹配多行内容直到分号
             pattern = r'const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*\{[\s\S]*?\n\};'
             replacement = f'const EMBEDDED_ARCHIVE_DATA = {archive_json};'
             new_html = re.sub(pattern, replacement, archive_html)
             if new_html != archive_html:
                 archive_html = new_html
-                print("[OK] mof_archive.html 数据已更新")
+                print("[OK] mof_archive.html 数据已合并更新")
             else:
-                print("[WARN] mof_archive.html 正则未匹配到数据，尝试备用方案")
-                # 备用方案：直接替换整个数据块
+                # 备用方案
                 pattern2 = r'(const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*)\{[\s\S]*?\}(;)'
                 replacement2 = r'\1' + archive_json + r'\2'
                 archive_html = re.sub(pattern2, replacement2, archive_html)
+                print("[OK] mof_archive.html 数据已更新（备用方案）")
         else:
-            # 添加新的内嵌数据（在第一个 <script> 标签后）
+            # 添加新的内嵌数据
             insert_script = "// 内嵌历史数据（自动更新）\nconst EMBEDDED_ARCHIVE_DATA = " + archive_json + ";\n"
-            # 在 <script> 标签后插入
-            archive_html = archive_html.replace(
-                '<script>',
-                '<script>\n' + insert_script
-            )
+            archive_html = archive_html.replace('<script>', '<script>\n' + insert_script)
             print("[OK] mof_archive.html 已添加新数据")
         
         with open('mof_archive.html', 'w', encoding='utf-8') as f:
