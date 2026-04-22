@@ -86,24 +86,15 @@ def parse_detail_page(html, url):
     if date_match:
         result["pubDate"] = date_match.group(1)
     
-    # 3. 获取正文内容 - 查找 id=xxgk_content 的元素
-    content_match = re.search(r'<div[^>]*id=["\']xxgk_content["\'][^>]*>(.*?)</div>', html, re.DOTALL)
-    if not content_match:
-        content_match = re.search(r'<div[^>]*class=["\'][^"\']*content[^"\']*["\'][^>]*>(.*?)</div>', html, re.DOTALL)
-    
-    if content_match:
-        content = content_match.group(1)
-        # 去除HTML标签获取纯文本
-        content = re.sub(r'<[^>]+>', ' ', content)
+    # 3. 获取正文内容
+    # sqbxzContent 等容器因嵌套 div 贪婪匹配会截断，直接从 body 整体提取更可靠
+    body_match = re.search(r'<body[^>]*>(.*?)</body>', html, re.DOTALL)
+    if body_match:
+        content = re.sub(r'<[^>]+>', ' ', body_match.group(1))
         content = re.sub(r'\s+', ' ', content).strip()
     else:
-        # 备用：直接获取整个body的文本
-        body_match = re.search(r'<body[^>]*>(.*?)</body>', html, re.DOTALL)
-        if body_match:
-            content = re.sub(r'<[^>]+>', ' ', body_match.group(1))
-            content = re.sub(r'\s+', ' ', content).strip()
-        else:
-            content = ""
+        content = re.sub(r'<[^>]+>', ' ', html)
+        content = re.sub(r'\s+', ' ', content).strip()
     
     # 清理HTML实体
     import html
@@ -174,23 +165,45 @@ def parse_detail_page(html, url):
     if penalty_parts:
         result["penalty"] = '，'.join(penalty_parts[:6])
     
-    # 6. 提取检查发现的问题 - 完整提取"一、检查发现的主要问题"下面的内容
-    # 匹配"一、检查发现的主要问题"到"上述事实"之间的内容
+    # 6. 提取检查发现的问题 - 两种页面结构：
+    #    A. "如下：  一、XXX  二、XXX  上述事实"（公司案件，多条问题）
+    #    B. "如下：  2024年... 上述事实"（个人案件，直接是内容，无"一、"标题）
+    issues_match = None
+    
+    # 优先：结构A - "如下：" 后接 "一、XXX"
     issues_match = re.search(
-        r'一[、.]检查发现的主要问题[：:\s]*([\s\S]*?)(?=上述事实|二[、.]|当事人对本机关|本机关认为)',
+        r'(?:检查发现的主要问题[^。\n]*如下[：:]\s*|检查发现的主要问题[：:\s]+)'
+        r'(一[、.、]\s*[\s\S]*?)(?=上述事实|当事人对本机关|本机关认为|依据|$)',
         content
     )
+    
+    if not issues_match:
+        # 结构B - "如下：" 后直接接正文内容（无"一、"）
+        issues_match = re.search(
+            r'检查发现的主要问题[^。\n]*如下[：:]\s*(.{20,}?)(?=上述事实|当事人对本机关|本机关认为)',
+            content,
+            re.DOTALL
+        )
+    
+    if not issues_match:
+        # 备用1：直接找 "一、XXX" 到 "上述事实"
+        issues_match = re.search(
+            r'(一[、.、]\s*.{5,}[\s\S]*?)(?=上述事实|当事人对本机关|本机关认为)',
+            content
+        )
+    
+    if not issues_match:
+        # 备用2：找 "存在以下问题" 后面的内容
+        issues_match = re.search(
+            r'存在以下问题[：:]\s*([\s\S]{50,2000}?)(?:上述事实|当事人|$)',
+            content
+        )
+    
     if issues_match:
         raw_issues = issues_match.group(1).strip()
-        # 清理格式，保留段落结构
-        raw_issues = re.sub(r'\n{3,}', '\n\n', raw_issues)  # 最多保留两个换行
+        raw_issues = re.sub(r'\n{3,}', '\n\n', raw_issues)
         raw_issues = raw_issues.strip()
         result["issues"] = raw_issues
-    elif len(content) > 100:
-        # 备用：提取"存在以下问题"后面的内容
-        issues_match = re.search(r'存在以下问题[：:]\s*([\s\S]{100,2000}?)(?:上述事实|当事人|$)', content)
-        if issues_match:
-            result["issues"] = issues_match.group(1).strip()
     
     return result
 
