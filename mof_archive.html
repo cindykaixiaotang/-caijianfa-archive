@@ -943,13 +943,14 @@ function renderTableRow(e, idx, i, date) {
   const issuesShort = truncateText(e.issues || '', 60);
   const issuesId = 'issues-' + idx;
 
-  // 解析AI分析结果
-  const parsed = parseAIAnalysis(e.aiAnalysis || '');
-  const hasAnalysis = !!e.aiAnalysis;
+  // 解析AI分析结果（优先 localStorage，其次 GitHub）
+  const aiAnalysis = getEntryAIAnalysis(e);
+  const parsed = parseAIAnalysis(aiAnalysis);
+  const hasAnalysis = !!aiAnalysis;
 
   // 判断分析状态：成功、失败、未分析（先定义，后面用到）
-  const analysisSuccess = hasAnalysis && isAnalysisSuccess(e.aiAnalysis);
-  const analysisFailed = hasAnalysis && !isAnalysisSuccess(e.aiAnalysis);
+  const analysisSuccess = hasAnalysis && isAnalysisSuccess(aiAnalysis);
+  const analysisFailed = hasAnalysis && !isAnalysisSuccess(aiAnalysis);
 
   const issuesToggle = e.issues ? `<span class="cell-expand-btn" id="${issuesId}-btn" onclick="toggleCell('${issuesId}')">展开</span>` : '';
 
@@ -957,15 +958,13 @@ function renderTableRow(e, idx, i, date) {
   const penaltyId = 'penalty-' + idx;
   const penaltyToggle = e.penalty && e.penalty.length > 30 ? `<span class="cell-expand-btn" id="${penaltyId}-btn" onclick="toggleCell('${penaltyId}')">展开</span>` : '';
 
-  // 涉及准则列（展开按钮始终显示，内容超3行时由CSS截断）
+  // 涉及准则列
   const stdId = 'std-' + idx;
-  const stdToggle = hasAnalysis && parsed.standards ? `<span class="cell-expand-btn" id="${stdId}-btn" onclick="toggleCell('${stdId}')">展开</span>` : '';
-  const stdDetail = hasAnalysis && parsed.standards ? `<div id="${stdId}-detail" class="expand-detail">${escHtml(parsed.standards)}</div>` : '';
+  const stdToggle = analysisSuccess && parsed.standards ? `<span class="cell-expand-btn" id="${stdId}-btn" onclick="toggleCell('${stdId}')">展开</span>` : '';
 
-  // 违规点列（展开按钮始终显示，内容超3行时由CSS截断）
+  // 违规点列
   const vioId = 'vio-' + idx;
   const vioToggle = analysisSuccess ? `<span class="cell-expand-btn" id="${vioId}-btn" onclick="toggleCell('${vioId}')">展开</span>` : '';
-  const vioDetail = analysisSuccess ? `<div id="${vioId}-detail" class="expand-detail">${escHtml(parsed.violations)}</div>` : '';
   
   const aiBtn = analysisSuccess
     ? `<span class="ai-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M20 6L9 17l-5-5"/></svg>已分析</span>`
@@ -993,14 +992,12 @@ function renderTableRow(e, idx, i, date) {
       ${hasAnalysis && parsed.standards ? `
       <div id="${stdId}" class="cell-text">${escHtml(parsed.standards)}</div>
       ${stdToggle}
-      ${stdDetail}
       ` : `<span style="font-size:11px;color:#ccc;">—</span>`}
     </td>
     <td class="td-violations ${analysisSuccess ? 'cell-ai' : ''}">
       ${analysisSuccess ? `
       <div id="${vioId}" class="cell-text">${escHtml(parsed.violations)}</div>
       ${vioToggle}
-      ${vioDetail}
       ` : `<div style="font-size:11px;color:#ccc;text-align:center;padding:8px 0;">${aiBtn}</div>`}
     </td>
   </tr>`;
@@ -1185,25 +1182,19 @@ async function analyzeHistory(idx, href) {
       btnSelector.style.background = '#27ae60';
     }
     
-    // 如果DOM元素不存在（首次分析），需要动态创建
-    // 初始状态：3行截断 + 展开按钮，用一个元素 + .expanded 类控制
-    if (!stdDetailEl) {
-      const stdCell = vioTd.querySelector('.td-standards');
-      if (stdCell) {
-        stdCell.innerHTML = `
-          <div id="${stdId}" class="cell-text">${escHtml(newParsed.standards)}</div>
-          <span class="cell-expand-btn" id="${stdId}-btn">展开</span>
-        `;
-        document.getElementById(stdId + '-btn').onclick = function() { toggleCell(stdId); };
-      }
-    } else {
+    // 涉及准则列：首次分析时需要创建 cell-text 元素
+    const stdCell = vioTd.querySelector('.td-standards');
+    if (stdCell && !stdTextEl) {
+      stdCell.innerHTML = `
+        <div id="${stdId}" class="cell-text">${escHtml(newParsed.standards)}</div>
+        <span class="cell-expand-btn" id="${stdId}-btn">展开</span>
+      `;
+      document.getElementById(stdId + '-btn').onclick = function() { toggleCell(stdId); };
+    } else if (stdTextEl) {
       // 更新文本内容（初始状态：3行截断，不展开）
-      if (stdTextEl) {
-        stdTextEl.textContent = newParsed.standards;
-        stdTextEl.classList.remove('expanded');
-        stdTextEl.style.display = '';
-      }
-      if (stdDetailEl) stdDetailEl.remove(); // 删除多余的全文字段
+      stdTextEl.textContent = newParsed.standards;
+      stdTextEl.classList.remove('expanded');
+      stdTextEl.style.display = '';
       if (stdBtnEl) {
         stdBtnEl.style.display = 'inline-block';
         stdBtnEl.textContent = '展开';
@@ -1211,24 +1202,21 @@ async function analyzeHistory(idx, href) {
     }
     
     // 违规点列：首次分析完成，初始状态3行截断
-    if (!vioDetailEl) {
-      const vioCell = vioTd.querySelector('.td-violations');
-      if (vioCell) {
-        vioCell.innerHTML = `
-          <div id="${vioId}" class="cell-text">${escHtml(newParsed.violations)}</div>
-          <span class="cell-expand-btn" id="${vioId}-btn">展开</span>
-        `;
-        document.getElementById(vioId + '-btn').onclick = function() { toggleCell(vioId); };
-        vioCell.classList.add('cell-ai');
-      }
-    } else {
+    const vioCell = vioTd.querySelector('.td-violations');
+    if (vioCell && !vioTextEl) {
+      vioCell.innerHTML = `
+        <div id="${vioId}" class="cell-text">${escHtml(newParsed.violations)}</div>
+        <span class="cell-expand-btn" id="${vioId}-btn">展开</span>
+        ${btnSelector ? btnSelector.outerHTML : ''}
+      `;
+      document.getElementById(vioId + '-btn').onclick = function() { toggleCell(vioId); };
+      vioCell.classList.add('cell-ai');
+      if (btnSelector) btnSelector.remove(); // 移除重复的按钮
+    } else if (vioTextEl) {
       // 更新文本内容（初始状态：3行截断，不展开）
-      if (vioTextEl) {
-        vioTextEl.textContent = newParsed.violations;
-        vioTextEl.classList.remove('expanded');
-        vioTextEl.style.display = '';
-      }
-      if (vioDetailEl) vioDetailEl.remove(); // 删除多余的全文字段
+      vioTextEl.textContent = newParsed.violations;
+      vioTextEl.classList.remove('expanded');
+      vioTextEl.style.display = '';
       if (vioBtnEl) {
         vioBtnEl.style.display = 'inline-block';
         vioBtnEl.textContent = '展开';
@@ -1473,16 +1461,50 @@ function exportHistory() {
 // ============================================================
 //  初始化
 // ============================================================
-function init() {
+let __githubAIMap = new Map(); // 缓存 GitHub 上的 AI 分析结果（href -> aiAnalysis）
+
+// 从 GitHub API 加载 AI 分析结果
+async function loadGitHubAIAnalyses() {
+  if (__githubAIMap.size > 0) return;
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${SYNC_FILE}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const content = JSON.parse(atob(data.content));
+    if (content.entries) {
+      content.entries.forEach(e => {
+        if (e.href && e.aiAnalysis) {
+          __githubAIMap.set(e.href, e.aiAnalysis);
+        }
+      });
+      console.log(`[INFO] 从 GitHub 加载了 ${__githubAIMap.size} 条 AI 分析结果`);
+    }
+  } catch(e) {
+    console.warn('加载 GitHub AI 分析结果失败:', e);
+  }
+}
+
+// 获取条目的 AI 分析结果（优先 localStorage，其次 GitHub）
+function getEntryAIAnalysis(entry) {
+  return entry.aiAnalysis || __githubAIMap.get(entry.href) || '';
+}
+
+async function init() {
   window.__currentPage = 1;
+  
+  // 如果有内嵌数据，先异步加载 GitHub 上的 AI 分析结果
+  if (typeof EMBEDDED_ARCHIVE_DATA !== 'undefined') {
+    loadGitHubAIAnalyses(); // 不等待，让它在后台加载
+  }
+  
   renderHistoryOverview();
   renderAllHistory();
   initColumnResize();
 }
 
 // 等待 DOM 加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-  init();
+document.addEventListener('DOMContentLoaded', async function() {
+  await init();
   
   // 搜索框回车搜索
   document.getElementById('main').addEventListener('keydown', function(e) {
