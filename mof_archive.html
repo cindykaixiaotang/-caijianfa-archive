@@ -261,26 +261,18 @@
     .td-standards { min-width: 100px; }
     .td-violations { min-width: 150px; }
 
-    /* 涉及准则 / 违规点：收起时最多3行 */
-    .td-standards .cell-text,
-    .td-violations .cell-text {
-      -webkit-line-clamp: 3;
-    }
-    .td-standards .cell-text.expanded,
-    .td-violations .cell-text.expanded {
-      -webkit-line-clamp: unset;
-    }
-
+    /* 涉及准则 / 违规点 / 检查问题：默认最多3行 */
     .cell-text {
       font-size: 11px;
       line-height: 1.7;
       color: #546e7a;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
       word-break: break-word;
     }
+    /* 展开后移除行数限制 */
     .cell-text.expanded {
       display: block;
       -webkit-line-clamp: unset;
@@ -635,16 +627,31 @@ async function pushToRepo(token) {
 
   // 遇到 409 冲突（SHA 过期，被 GitHub Actions 等其他进程抢先更新了）则重试一次
   if (resp.status === 409) {
+    // 尝试从 409 响应体解析最新 SHA（GitHub 会返回最新 SHA 在 errors[].message 中）
+    let freshSha = null;
     try {
-      const getResp2 = await fetch(`${apiBase}/contents/${SYNC_FILE}?ref=${SYNC_BRANCH}`, {
-        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }
-      });
-      if (getResp2.ok) {
-        const data2 = await getResp2.json();
-        payload.sha = data2.sha;
-      }
+      const errBody = await resp.json();
+      // GitHub 返回结构: errors[0].message 包含 "latest SHA is <sha>"
+      const shaMatch = errBody.message && errBody.message.match(/([a-f0-9]{40})/);
+      if (shaMatch) freshSha = shaMatch[1];
     } catch(e) {}
 
+    // 如果 409 响应体里没有 SHA，重新获取
+    if (!freshSha) {
+      try {
+        const getResp2 = await fetch(`${apiBase}/contents/${SYNC_FILE}?ref=${SYNC_BRANCH}`, {
+          headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }
+        });
+        if (getResp2.ok) {
+          const data2 = await getResp2.json();
+          freshSha = data2.sha;
+        }
+      } catch(e) {}
+    }
+
+    if (!freshSha) throw new Error('409冲突但无法获取最新SHA，请稍后重试');
+
+    payload.sha = freshSha;
     const resp2 = await fetch(`${apiBase}/contents/${SYNC_FILE}`, {
       method: 'PUT',
       headers: {
@@ -699,15 +706,31 @@ function escHtml(s) {
 // ============================================================
 function loadHistory() {
   // 优先使用内嵌数据（GitHub Pages 用）
+  let baseData = null;
   if (typeof EMBEDDED_ARCHIVE_DATA !== 'undefined') {
-    return EMBEDDED_ARCHIVE_DATA;
+    baseData = EMBEDDED_ARCHIVE_DATA;
   }
+  
   // 回退到 localStorage（本地开发用）
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch(e) { return null; }
+    if (!raw) return baseData;
+    const localData = JSON.parse(raw);
+    
+    // 如果有内嵌数据，合并 localStorage 中的 AI 分析结果
+    if (baseData && baseData.allEntries) {
+      const localEntriesMap = new Map(localData.allEntries.map(e => [e.href, e.aiAnalysis]));
+      baseData.allEntries = baseData.allEntries.map(entry => {
+        if (localEntriesMap.has(entry.href)) {
+          return { ...entry, aiAnalysis: localEntriesMap.get(entry.href) };
+        }
+        return entry;
+      });
+      return baseData;
+    }
+    
+    return localData;
+  } catch(e) { return baseData; }
 }
 
 function saveToStorage(newData) {
@@ -983,22 +1006,22 @@ function renderTableRow(e, idx, i, date) {
   </tr>`;
 }
 
-// 单元格展开/收起（收起时最多3行+展开按钮，展开后只显示全文）
+// 单元格展开/收起（通过 .expanded 类控制，初始状态最多3行）
 function toggleCell(id) {
   const textEl = document.getElementById(id);
-  const detailEl = document.getElementById(id + '-detail');
   const btnEl = document.getElementById(id + '-btn');
-  if (!textEl && !detailEl) return;
-  const isExpanded = detailEl && detailEl.classList.contains('show');
+  if (!textEl) return;
+  
+  const isExpanded = textEl.classList.contains('expanded');
   if (isExpanded) {
-    // 收起：隐藏全文，显示截断内容
-    if (detailEl) detailEl.classList.remove('show');
-    if (textEl) { textEl.style.display = ''; textEl.classList.remove('expanded'); }
+    // 收起：恢复3行截断
+    textEl.classList.remove('expanded');
+    textEl.style.display = '';  // 让 CSS 的 -webkit-line-clamp: 3 生效
     if (btnEl) btnEl.textContent = '展开';
   } else {
-    // 展开：隐藏截断内容，只显示全文
-    if (textEl) textEl.style.display = 'none';
-    if (detailEl) { detailEl.classList.add('show'); }
+    // 展开：移除行数限制
+    textEl.classList.add('expanded');
+    textEl.style.display = 'block';  // 确保全文正常显示
     if (btnEl) btnEl.textContent = '收起';
   }
 }
@@ -1107,10 +1130,8 @@ async function analyzeHistory(idx, href) {
   const stdTextEl = document.getElementById(stdId);
   const vioTextEl = document.getElementById(vioId);
 
-  if (stdTextEl) stdTextEl.style.display = 'none';
-  if (vioTextEl) vioTextEl.style.display = 'none';
-  if (stdDetailEl) { stdDetailEl.textContent = '🤔 AI分析中...'; stdDetailEl.classList.add('show'); }
-  if (vioDetailEl) { vioDetailEl.textContent = '🤔 AI分析中...'; vioDetailEl.classList.add('show'); }
+  if (stdTextEl) { stdTextEl.textContent = '🤔 AI分析中...'; stdTextEl.classList.remove('expanded'); }
+  if (vioTextEl) { vioTextEl.textContent = '🤔 AI分析中...'; vioTextEl.classList.remove('expanded'); }
   if (stdBtnEl) stdBtnEl.style.display = 'none';
   if (vioBtnEl) vioBtnEl.style.display = 'none';
 
@@ -1132,9 +1153,15 @@ async function analyzeHistory(idx, href) {
 
   const newParsed = parseAIAnalysis(result);
 
-  // 填充内容（展开状态：只显示全文）
-  if (stdDetailEl) stdDetailEl.textContent = newParsed.standards;
-  if (vioDetailEl) vioDetailEl.textContent = newParsed.violations;
+  // 填充内容
+  if (stdTextEl) {
+    stdTextEl.textContent = newParsed.standards;
+    stdTextEl.style.display = '';
+  }
+  if (vioTextEl) {
+    vioTextEl.textContent = newParsed.violations;
+    vioTextEl.style.display = '';
+  }
   
   // 恢复按钮状态（无论成功失败都要恢复）
   if (btnSelector) {
@@ -1159,52 +1186,52 @@ async function analyzeHistory(idx, href) {
     }
     
     // 如果DOM元素不存在（首次分析），需要动态创建
+    // 初始状态：3行截断 + 展开按钮，用一个元素 + .expanded 类控制
     if (!stdDetailEl) {
       const stdCell = vioTd.querySelector('.td-standards');
       if (stdCell) {
-        const stdShort = truncateText(newParsed.standards, 60);
         stdCell.innerHTML = `
-          <div id="${stdId}" class="cell-text">${escHtml(stdShort)}</div>
-          <span class="cell-expand-btn" id="${stdId}-btn" onclick="toggleCell('${stdId}')">收起</span>
-          <div id="${stdId}-detail" class="expand-detail show">${escHtml(newParsed.standards)}</div>
+          <div id="${stdId}" class="cell-text">${escHtml(newParsed.standards)}</div>
+          <span class="cell-expand-btn" id="${stdId}-btn">展开</span>
         `;
+        document.getElementById(stdId + '-btn').onclick = function() { toggleCell(stdId); };
       }
     } else {
-      // 更新缩略文本内容
+      // 更新文本内容（初始状态：3行截断，不展开）
       if (stdTextEl) {
-        const stdShort = truncateText(newParsed.standards, 60);
-        stdTextEl.textContent = stdShort;
+        stdTextEl.textContent = newParsed.standards;
+        stdTextEl.classList.remove('expanded');
         stdTextEl.style.display = '';
       }
+      if (stdDetailEl) stdDetailEl.remove(); // 删除多余的全文字段
       if (stdBtnEl) {
         stdBtnEl.style.display = 'inline-block';
-        stdBtnEl.textContent = '收起';
-        stdBtnEl.onclick = function() { toggleCell(stdId); };
+        stdBtnEl.textContent = '展开';
       }
     }
     
+    // 违规点列：首次分析完成，初始状态3行截断
     if (!vioDetailEl) {
       const vioCell = vioTd.querySelector('.td-violations');
       if (vioCell) {
-        const vioShort = truncateText(newParsed.violations, 80);
         vioCell.innerHTML = `
-          <div id="${vioId}" class="cell-text">${escHtml(vioShort)}</div>
-          <span class="cell-expand-btn" id="${vioId}-btn" onclick="toggleCell('${vioId}')">收起</span>
-          <div id="${vioId}-detail" class="expand-detail show">${escHtml(newParsed.violations)}</div>
+          <div id="${vioId}" class="cell-text">${escHtml(newParsed.violations)}</div>
+          <span class="cell-expand-btn" id="${vioId}-btn">展开</span>
         `;
+        document.getElementById(vioId + '-btn').onclick = function() { toggleCell(vioId); };
         vioCell.classList.add('cell-ai');
       }
     } else {
-      // 更新缩略文本内容
+      // 更新文本内容（初始状态：3行截断，不展开）
       if (vioTextEl) {
-        const vioShort = truncateText(newParsed.violations, 80);
-        vioTextEl.textContent = vioShort;
+        vioTextEl.textContent = newParsed.violations;
+        vioTextEl.classList.remove('expanded');
         vioTextEl.style.display = '';
       }
+      if (vioDetailEl) vioDetailEl.remove(); // 删除多余的全文字段
       if (vioBtnEl) {
         vioBtnEl.style.display = 'inline-block';
-        vioBtnEl.textContent = '收起';
-        vioBtnEl.onclick = function() { toggleCell(vioId); };
+        vioBtnEl.textContent = '展开';
       }
       vioTd.classList.add('cell-ai');
     }
