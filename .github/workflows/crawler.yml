@@ -23,6 +23,17 @@ jobs:
     - name: 安装依赖
       run: |
         pip install requests beautifulsoup4
+
+    - name: 读取 ai_analyses.json 文件
+      id: ai_analysis
+      run: |
+        if [ -f "ai_analyses.json" ]; then
+          echo "已找到 ai_analyses.json"
+          echo "ai_data_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "ai_analyses.json 不存在，跳过 AI 分析合并"
+          echo "ai_data_exists=false" >> $GITHUB_OUTPUT
+        fi
     
     - name: 运行爬虫
       run: |
@@ -33,7 +44,24 @@ jobs:
         python << 'EOF'
         import json
         import re
-        
+        import os
+
+        # ========== 读取 ai_analyses.json（浏览器推送的 AI 分析结果） ==========
+        gist_ai_map = {}
+        if os.path.exists('ai_analyses.json'):
+            try:
+                with open('ai_analyses.json', 'r', encoding='utf-8') as f:
+                    ai_data = json.load(f)
+                for e in ai_data.get('entries', []):
+                    href = e.get('href', '')
+                    if href and e.get('aiAnalysis'):
+                        gist_ai_map[href] = e['aiAnalysis']
+                print(f"[INFO] 从 ai_analyses.json 读取到 {len(gist_ai_map)} 条 AI 分析结果")
+            except Exception as ge:
+                print(f"[WARN] 解析 ai_analyses.json 失败: {ge}")
+        else:
+            print("[INFO] ai_analyses.json 不存在，跳过")
+
         # 读取爬取的最新数据
         with open('mof_penalty_data.json', 'r', encoding='utf-8') as f:
             new_data = json.load(f)
@@ -77,19 +105,34 @@ jobs:
         
         # 建立旧数据的 URL -> aiAnalysis 映射，用于复用 AI 分析结果
         existing_ai_map = {e.get('href', ''): e.get('aiAnalysis', '') for e in existing_entries if e.get('aiAnalysis')}
-        
+
+        # 将 Gist 中的 AI 分析结果也合并进来（优先用已有的）
+        gist_injected = 0
+        for entry in existing_entries:
+            url = entry.get('href', '')
+            if not entry.get('aiAnalysis') and url in gist_ai_map:
+                entry['aiAnalysis'] = gist_ai_map[url]
+                gist_injected += 1
+                print(f"[INFO] 从 Gist 注入 AI 分析: {entry.get('title', '')[:30]}...")
+
         # 只添加不存在的新条目
         added_count = 0
         for entry in new_entries:
             url = entry.get('href', '')
             if url not in existing_urls:
                 entry['_date'] = new_data.get('dateA', '')
-                # 如果有相同 URL 的旧 AI 分析结果，复用它
+                # 优先复用旧分析，其次从 Gist 补充
                 if url in existing_ai_map and existing_ai_map[url]:
                     entry['aiAnalysis'] = existing_ai_map[url]
-                    print(f"[INFO] 复用 AI 分析: {entry.get('title', '')[:30]}...")
+                    print(f"[INFO] 复用已有 AI 分析: {entry.get('title', '')[:30]}...")
+                elif url in gist_ai_map and gist_ai_map[url]:
+                    entry['aiAnalysis'] = gist_ai_map[url]
+                    print(f"[INFO] 从 Gist 补充 AI 分析: {entry.get('title', '')[:30]}...")
                 existing_entries.append(entry)
                 added_count += 1
+
+        if gist_injected > 0:
+            print(f"[INFO] 合计从 Gist 注入 {gist_injected} 条分析结果")
         
         print(f"[INFO] 新增 {added_count} 条记录，总共 {len(existing_entries)} 条")
         
@@ -111,7 +154,8 @@ jobs:
             "snapshots": existing_snapshots,
             "lastUpdated": new_data.get("cachedAt", "")
         }
-        archive_json = json.dumps(archive_data, ensure_ascii=False, indent=2)
+        # 使用 indent=None（紧凑JSON）避免裸换行符问题
+        archive_json = json.dumps(archive_data, ensure_ascii=False, indent=None, separators=(',', ':'))
         
         # 替换 EMBEDDED_ARCHIVE_DATA
         if 'const EMBEDDED_ARCHIVE_DATA' in archive_html:
@@ -144,5 +188,5 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add mof_penalty_data.json mof_latest.html mof_archive.html
+        git add mof_penalty_data.json mof_latest.html mof_archive.html ai_analyses.json
         git diff --staged --quiet || (git commit -m "自动更新: $(date +'%Y-%m-%d %H:%M')" && git push)
