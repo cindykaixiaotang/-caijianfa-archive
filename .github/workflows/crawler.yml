@@ -85,19 +85,36 @@ jobs:
         with open('mof_archive.html', 'r', encoding='utf-8') as f:
             archive_html = f.read()
         
-        # 提取现有的 EMBEDDED_ARCHIVE_DATA
+        # 用括号匹配方式提取现有的 EMBEDDED_ARCHIVE_DATA（可靠，不受 raw newline 影响）
+        KEYWORD = 'const EMBEDDED_ARCHIVE_DATA'
+        key_start = archive_html.find(KEYWORD)
         existing_entries = []
         existing_snapshots = []
-        archive_match = re.search(r'const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*(\{[\s\S]*?\n\});', archive_html)
         
-        if archive_match:
-            try:
-                existing_data = json.loads(archive_match.group(1))
-                existing_entries = existing_data.get('allEntries', [])
-                existing_snapshots = existing_data.get('snapshots', [])
-                print(f"[INFO] 现有数据: {len(existing_entries)} 条记录")
-            except:
-                print("[WARN] 无法解析现有数据，将创建新数据")
+        if key_start != -1:
+            brace_start = archive_html.find('{', key_start)
+            if brace_start != -1:
+                # 用栈匹配括号
+                depth = 0
+                json_end = -1
+                for i in range(brace_start, len(archive_html)):
+                    c = archive_html[i]
+                    if c == '{':
+                        depth += 1
+                    elif c == '}':
+                        depth -= 1
+                        if depth == 0:
+                            json_end = i
+                            break
+                if json_end != -1:
+                    json_str = archive_html[brace_start:json_end+1]
+                    try:
+                        existing_data = json.loads(json_str)
+                        existing_entries = existing_data.get('allEntries', [])
+                        existing_snapshots = existing_data.get('snapshots', [])
+                        print(f"[INFO] 现有数据: {len(existing_entries)} 条记录")
+                    except Exception as ex:
+                        print(f"[WARN] 无法解析现有数据: {ex}，将保留旧数据继续合并")
         
         # 合并数据：新数据 + 旧数据（按URL去重）
         new_entries = new_data.get("filtered", [])
@@ -142,7 +159,7 @@ jobs:
             "savedAt": new_data.get("cachedAt", ""),
             "count": len(new_entries)
         }
-        existing_snapshots.insert(0, new_snapshot)  # 新快照放前面
+        existing_snapshots.insert(0, new_snapshot)
         
         # 限制快照数量（保留最近30个）
         if len(existing_snapshots) > 30:
@@ -154,26 +171,21 @@ jobs:
             "snapshots": existing_snapshots,
             "lastUpdated": new_data.get("cachedAt", "")
         }
-        # 使用 indent=None（紧凑JSON）避免裸换行符问题
         archive_json = json.dumps(archive_data, ensure_ascii=False, indent=None, separators=(',', ':'))
         
-        # 替换 EMBEDDED_ARCHIVE_DATA
-        if 'const EMBEDDED_ARCHIVE_DATA' in archive_html:
-            pattern = r'const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*\{[\s\S]*?\n\};'
-            replacement = f'const EMBEDDED_ARCHIVE_DATA = {archive_json};'
-            new_html = re.sub(pattern, replacement, archive_html)
-            if new_html != archive_html:
-                archive_html = new_html
-                print("[OK] mof_archive.html 数据已合并更新")
-            else:
-                # 备用方案
-                pattern2 = r'(const\s+EMBEDDED_ARCHIVE_DATA\s*=\s*)\{[\s\S]*?\}(;)'
-                replacement2 = r'\1' + archive_json + r'\2'
-                archive_html = re.sub(pattern2, replacement2, archive_html)
-                print("[OK] mof_archive.html 数据已更新（备用方案）")
+        # 用括号匹配方式替换 EMBEDDED_ARCHIVE_DATA（可靠）
+        if key_start != -1 and brace_start != -1 and json_end != -1:
+            # 找 } 后的分号位置
+            semicolon_pos = json_end + 1
+            while semicolon_pos < len(archive_html) and archive_html[semicolon_pos] in ' \t\n\r':
+                semicolon_pos += 1
+            # 构建替换内容
+            replacement = KEYWORD + ' = ' + archive_json + ';'
+            archive_html = archive_html[:key_start] + replacement + archive_html[semicolon_pos + 1:]
+            print("[OK] mof_archive.html 数据已合并更新")
         else:
-            # 添加新的内嵌数据
-            insert_script = "// 内嵌历史数据（自动更新）\nconst EMBEDDED_ARCHIVE_DATA = " + archive_json + ";\n"
+            # 未找到现有数据，直接添加
+            insert_script = "const EMBEDDED_ARCHIVE_DATA = " + archive_json + ";"
             archive_html = archive_html.replace('<script>', '<script>\n' + insert_script)
             print("[OK] mof_archive.html 已添加新数据")
         
